@@ -1,0 +1,2170 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Плацдарм</title>
+<style>
+:root{
+  --bg:#eef1f6;
+  --panel:#ffffff;
+  --panel-2:#f3f5f9;
+  --line:#d9dfe9;
+  --text:#0f172a;
+  --muted:#5b6578;
+  --accent:#0b7fb8;
+  --accent-soft:rgba(11,127,184,.14);
+  --danger:#cf3352;
+  --ok:#0f8a63;
+  --gold:#a86b12;
+  --well:#0a0f17;
+  --shadow:rgba(15,23,42,.14);
+  --primary:#0a84c2;
+  --on-primary:#ffffff;
+  --me:#0b8fbd;
+  --foe:#d6345a;
+  --veil:rgba(4,8,14,.55);
+  --font:"Exo 2","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a0d13;
+    --panel:#11161f;
+    --panel-2:#171d29;
+    --line:#252e3e;
+    --text:#e6ebf5;
+    --muted:#8e98ac;
+    --accent:#3ad7ff;
+    --accent-soft:rgba(58,215,255,.16);
+    --danger:#ff5b7a;
+    --ok:#3ddc97;
+    --gold:#ffd166;
+    --well:#05080d;
+    --shadow:rgba(0,0,0,.55);
+    --primary:#22b8ee;
+    --on-primary:#03121a;
+    --me:#3ad7ff;
+    --foe:#ff5b7a;
+    --veil:rgba(2,4,8,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a0d13;
+  --panel:#11161f;
+  --panel-2:#171d29;
+  --line:#252e3e;
+  --text:#e6ebf5;
+  --muted:#8e98ac;
+  --accent:#3ad7ff;
+  --accent-soft:rgba(58,215,255,.16);
+  --danger:#ff5b7a;
+  --ok:#3ddc97;
+  --gold:#ffd166;
+  --well:#05080d;
+  --shadow:rgba(0,0,0,.55);
+  --primary:#22b8ee;
+  --on-primary:#03121a;
+  --me:#3ad7ff;
+  --foe:#ff5b7a;
+  --veil:rgba(2,4,8,.6);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;height:100%;overflow:hidden;overscroll-behavior:none;
+  background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+button{font:inherit;color:inherit}
+#app{
+  height:100%;display:flex;flex-direction:column;
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
+}
+
+/* верхняя панель */
+.hud{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;font-size:17px;letter-spacing:.02em;white-space:nowrap}
+.round{font-weight:700;white-space:nowrap;font-size:14px}
+.hps{flex:1;display:flex;gap:10px;min-width:0}
+.hp{flex:1;min-width:0;display:flex;align-items:center;gap:6px}
+.hp .who{font-size:12px;color:var(--muted);white-space:nowrap}
+.hp .bar{flex:1;height:8px;border-radius:4px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
+.hp .bar i{display:block;height:100%;width:100%;border-radius:3px;transition:width .5s ease}
+.hp.me .bar i{background:var(--me)}
+.hp.foe .bar i{background:var(--foe)}
+.hp b{font-variant-numeric:tabular-nums;font-size:13px;min-width:2.2em;text-align:right}
+.money{display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+.money .who{font-size:12px;color:var(--muted)}
+.money b{font-size:17px;font-variant-numeric:tabular-nums;color:var(--gold)}
+.iconbtn{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);display:grid;place-items:center;cursor:pointer;flex:none;touch-action:manipulation}
+.iconbtn svg{width:18px;height:18px}
+@media (max-width:520px){.brand{display:none}.money .who{display:none}.hp .who{display:none}}
+
+/* поле и панель */
+.main{flex:1;min-height:0;display:flex;flex-direction:column}
+.stage{position:relative;flex:1;min-height:0}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.panel{background:var(--panel);border-top:1px solid var(--line);padding:8px 10px 10px;display:flex;flex-direction:column;gap:8px;height:268px;flex:none}
+@media (min-width:760px) and (min-aspect-ratio:1/1){
+  .main{flex-direction:row}
+  .panel{width:340px;height:auto;flex:none;border-top:0;border-left:1px solid var(--line);overflow-y:auto;padding:12px}
+}
+
+/* карточки юнитов */
+.cards{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -2px;padding:0 2px}
+.cards::-webkit-scrollbar{display:none}
+@media (min-width:760px) and (min-aspect-ratio:1/1){.cards{display:grid;grid-template-columns:repeat(4,1fr);overflow:visible}}
+.unit{
+  position:relative;flex:0 0 78px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 3px 5px;border:1.5px solid var(--line);border-radius:10px;background:var(--panel-2);
+  cursor:pointer;touch-action:manipulation;transition:border-color .15s,transform .1s;
+}
+.unit:active{transform:scale(.96)}
+.unit canvas{width:46px;height:46px;border-radius:8px;background:var(--well)}
+.unit .nm{font-size:12px;font-weight:600;line-height:1.1;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.unit .meta{display:flex;gap:6px;font-size:11.5px;color:var(--muted);line-height:1}
+.unit .pr{font-weight:700;color:var(--gold)}
+.unit.poor .pr{color:var(--danger)}
+.unit.poor canvas{filter:saturate(.25) brightness(.6)}
+.unit.sel{border-color:var(--accent);background:var(--accent-soft)}
+.unit .hk{position:absolute;top:3px;left:6px;font-size:10px;color:var(--muted);display:none}
+@media (hover:hover) and (pointer:fine){.unit .hk{display:block}.unit:hover{border-color:var(--accent)}}
+.unit:focus-visible,.btn:focus-visible,.iconbtn:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+#deployUI{display:flex;flex-direction:column;gap:8px;min-height:0}
+@media (min-width:760px) and (min-aspect-ratio:1/1){#deployUI{flex:1}.info{flex:1}}
+/* сведения */
+.info{font-size:13px;line-height:1.35;height:96px;overflow-y:auto}
+.info .head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.info .head b{font-size:15px}
+.info .tag{font-size:12px;color:var(--muted)}
+.info .lvl{color:var(--gold);font-weight:700;font-size:12px}
+.info .desc{color:var(--muted);margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.chips span{font-size:11.5px;padding:2px 7px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);white-space:nowrap}
+.vs{margin-top:5px;font-size:12px;display:grid;gap:1px}
+.vs .good b{color:var(--ok)}
+.vs .bad b{color:var(--danger)}
+.info .hint{color:var(--muted)}
+.row-btns{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+@media (max-width:759px),(max-aspect-ratio:1/1){.info .desc{display:none}}
+@media (min-width:760px) and (min-aspect-ratio:1/1){.info{height:auto;min-height:62px}}
+
+/* кнопки */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;
+  border-radius:10px;border:1px solid var(--line);background:var(--panel-2);font-weight:700;cursor:pointer;touch-action:manipulation;
+}
+.btn.sm{min-height:34px;padding:0 11px;font-size:13px}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--on-primary);font-size:16px;min-height:46px}
+.btn.danger{color:var(--danger)}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.wide{width:100%}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-2)}
+.seg button{flex:1;min-height:38px;border:0;background:transparent;font-weight:700;cursor:pointer;touch-action:manipulation}
+.seg button.on{background:var(--accent-soft);color:var(--accent)}
+.seg button+button{border-left:1px solid var(--line)}
+
+/* бой */
+.tally{display:flex;justify-content:space-between;font-size:14px}
+.tally .me b{color:var(--me)}
+.tally .foe b{color:var(--foe)}
+.battle-row{display:flex;gap:8px;align-items:center}
+.battle-row .seg{flex:1}
+.armies{display:grid;gap:6px;margin-top:10px}
+.army{display:flex;flex-wrap:wrap;gap:4px}
+.army span{font-size:12px;padding:2px 7px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);white-space:nowrap}
+.army.me span{border-color:color-mix(in srgb,var(--me) 45%,var(--line))}
+.army.foe span{border-color:color-mix(in srgb,var(--foe) 45%,var(--line))}
+.army .none{color:var(--muted)}
+
+/* оверлеи */
+.toast{
+  position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:3;max-width:92%;
+  background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;
+  padding:7px 14px;font-weight:600;font-size:13px;box-shadow:0 8px 24px var(--shadow);pointer-events:none;text-align:center;
+}
+.overlay{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;padding:14px;background:var(--veil)}
+.ocard{
+  width:min(380px,100%);max-height:100%;overflow-y:auto;background:var(--panel);color:var(--text);
+  border:1px solid var(--line);border-radius:14px;padding:20px 18px 18px;box-shadow:0 20px 50px var(--shadow);
+  animation:pop .25s ease both;
+}
+.ocard h2{margin:0;font-size:28px;font-weight:800;line-height:1.1}
+.ocard .sub{margin:6px 0 0;color:var(--muted)}
+.ocard ol{margin:12px 0 4px;padding-left:20px;line-height:1.45}
+.ocard ol li+li{margin-top:4px}
+.ocard .label{font-size:12px;color:var(--muted);margin:14px 0 6px}
+.ocard .stack{display:grid;gap:8px;margin-top:16px}
+.res-lines{margin:12px 0 0;display:grid;gap:4px;font-size:15px}
+.res-lines .neg b{color:var(--danger)}
+.res-lines .pos b{color:var(--ok)}
+.res-lines .muted{color:var(--muted);font-size:13px}
+.win h2{color:var(--ok)}
+.lose h2{color:var(--danger)}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}}
+
+/* онлайн */
+.opp{font-size:13px;color:var(--muted);text-align:center;line-height:1.3}
+.opp b{color:var(--text)}
+.opp.ready b{color:var(--ok)}
+body.online .panel{height:278px}
+@media (min-width:760px) and (min-aspect-ratio:1/1){body.online .panel{height:auto}}
+.sect{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.sect h3{margin:0 0 8px;font-size:15px;font-weight:700}
+.sect .label{margin-top:0}
+.inp{width:100%;min-height:42px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);padding:0 12px;font:inherit;font-size:15px;-webkit-user-select:text;user-select:text}
+.inp:focus{outline:2px solid var(--accent);outline-offset:1px}
+.joinrow{display:flex;gap:8px}
+.joinrow .inp{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.12em}
+.bigcode{font-size:44px;font-weight:800;letter-spacing:.16em;text-align:center;margin:10px 0 4px;color:var(--accent);font-variant-numeric:tabular-nums}
+.reline{min-height:1.3em;text-align:center;color:var(--muted);margin-top:10px;font-size:13px}
+@media (prefers-reduced-motion:reduce){.ocard{animation:none}.unit,.hp .bar i{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hud">
+    <div class="brand">Плацдарм</div>
+    <div class="round" id="roundLbl">Раунд 1</div>
+    <div class="hps">
+      <div class="hp me" title="Твоя база"><span class="who">Ты</span><div class="bar"><i id="hpMeBar"></i></div><b id="hpMe">300</b></div>
+      <div class="hp foe" title="База соперника"><span class="who" id="foeName">Бот</span><div class="bar"><i id="hpFoeBar"></i></div><b id="hpFoe">300</b></div>
+    </div>
+    <div class="money" title="Кредиты"><span class="who">Кредиты</span><b id="credits">200</b></div>
+    <button class="iconbtn" id="menuBtn" type="button" aria-label="Меню">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </header>
+  <main class="main">
+    <section class="stage" id="stage">
+      <canvas id="cv" aria-label="Поле боя"></canvas>
+      <div class="toast" id="toast" role="status" hidden></div>
+      <div class="overlay" id="overlay" hidden><div class="ocard" id="ocard"></div></div>
+    </section>
+    <aside class="panel" id="panel">
+      <div id="deployUI">
+        <div class="cards" id="cards"></div>
+        <div class="info" id="info"></div>
+        <div class="opp" id="oppLine" hidden></div>
+        <button class="btn primary wide" id="fightBtn" type="button">В бой</button>
+      </div>
+      <div id="battleUI" hidden>
+        <div class="tally"><span class="me">Твои: <b id="aliveMe">0</b></span><span class="foe"><span id="aliveFoeLbl">Бот</span>: <b id="aliveFoe">0</b></span></div>
+        <div class="battle-row" style="margin-top:8px">
+          <div class="seg" id="speedSeg" role="group" aria-label="Скорость боя">
+            <button type="button" data-speed="1">×1</button><button type="button" data-speed="2">×2</button><button type="button" data-speed="4">×4</button>
+          </div>
+          <button class="btn" id="skipBtn" type="button">Пропустить</button>
+        </div>
+        <div class="armies"><div class="army me" id="armyMe"></div><div class="army foe" id="armyFoe"></div></div>
+      </div>
+    </aside>
+  </main>
+</div>
+<script>
+/* ===== Онлайн: сюда вставляется конфиг веб-приложения из консоли Firebase ===== */
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB6qz9gMHH_p7qMh80W2kpZU1laHUbtgOg",
+  authDomain: "plazdarmgame.firebaseapp.com",
+  databaseURL: "https://plazdarmgame-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "plazdarmgame",
+  storageBucket: "plazdarmgame.firebasestorage.app",
+  messagingSenderId: "290606680040",
+  appId: "1:290606680040:web:23b8a93a34c27b3962865d"
+};
+</script>
+<script>
+/* ===================== ЯДРО: юниты, бой, бот (без DOM) ===================== */
+'use strict';
+
+const FW = 360, FH = 500, SLOT = 36, COLS = 10, ROWS = 4, ZONE = ROWS * SLOT;
+const DT = 1 / 30, BATTLE_TIME = 75;
+const ARMOR = 0.5;                      // тяжёлая броня режет урон пулемётов, дронов и молний
+const LVL_MUL = [1, 1.6, 2.2];          // множитель здоровья и урона по уровням
+const LOSS_MUL = [1, 1.5, 2];           // во сколько раз больше урона базе наносит выживший юнит
+const UPG_COST = [0.6, 0.9];            // цена улучшения до 2 и 3 уровня (доля цены отряда)
+const START_HP = 300, START_CREDITS = 200, MAX_ROUNDS = 15;
+const income = (r) => 150 + 25 * (r - 1);
+
+// atk: melee | gun | rail | tesla | beam | shell | bolt | flak
+const UT = [
+  { k: 'swarm', name: 'Рой', cost: 50, cnt: 16, hp: 40, dmg: 7, cd: 0.5, rng: 3, spd: 72, r: 3.5,
+    air: false, gnd: true, aa: false, heavy: false, front: true, loss: 1, atk: 'melee',
+    desc: 'Орда мелких дронов ближнего боя. Дёшево, быстро, давит числом.' },
+  { k: 'hound', name: 'Гончие', cost: 75, cnt: 8, hp: 90, dmg: 9, cd: 0.4, rng: 110, spd: 56, r: 5,
+    air: false, gnd: true, aa: true, heavy: false, front: true, loss: 2, atk: 'gun',
+    desc: 'Лёгкие пулемётные мехи. Бьют и по земле, и по воздуху.' },
+  { k: 'rail', name: 'Рельсотрон', cost: 100, cnt: 2, hp: 280, dmg: 150, cd: 2.6, rng: 240, spd: 40, r: 8,
+    air: false, gnd: true, aa: false, heavy: false, loss: 6, atk: 'rail', vsHeavy: 2.5, pref: 'heavy',
+    desc: 'Дальнобойный снайпер. Медленно, но очень больно, особенно по тяжёлым.' },
+  { k: 'tesla', name: 'Тесла', cost: 100, cnt: 2, hp: 350, dmg: 55, cd: 0.9, rng: 95, spd: 42, r: 8.5,
+    air: false, gnd: true, aa: false, heavy: false, loss: 6, atk: 'tesla', jumps: 6, jumpR: 45, fall: 0.85,
+    desc: 'Цепная молния перескакивает между целями. Выжигает толпы.' },
+  { k: 'goliath', name: 'Голиаф', cost: 150, cnt: 1, hp: 2600, dmg: 30, cd: 0, rng: 85, spd: 30, r: 15,
+    air: false, gnd: true, aa: false, heavy: true, front: true, loss: 15, atk: 'beam', ramp: 60, maxDps: 300,
+    desc: 'Тяжёлый танк с лучом, который разогревается, пока держит одну цель.' },
+  { k: 'arty', name: 'Гаубица', cost: 150, cnt: 2, hp: 260, dmg: 90, cd: 2.8, rng: 320, minRng: 70, spd: 28, r: 9.5,
+    air: false, gnd: true, aa: false, heavy: true, loss: 8, atk: 'shell', splash: 34,
+    desc: 'Артиллерия через всё поле, бьёт по площади. Не стреляет вплотную.' },
+  { k: 'wasp', name: 'Осы', cost: 125, cnt: 4, hp: 160, dmg: 16, cd: 0.6, rng: 70, spd: 90, r: 7,
+    air: true, gnd: true, aa: false, heavy: false, loss: 4, atk: 'bolt',
+    desc: 'Штурмовые дроны. Летают, поэтому их достают только Гончие и Зенитки.' },
+  { k: 'flak', name: 'Зенитка', cost: 75, cnt: 2, hp: 300, dmg: 45, cd: 0.9, rng: 180, spd: 40, r: 8.5,
+    air: false, gnd: true, aa: true, heavy: false, loss: 4, atk: 'flak', splash: 16, gndMul: 0.3, pref: 'air',
+    desc: 'ПВО с осколочными разрывами. По наземным целям почти бесполезна.' },
+];
+const KI = {};
+UT.forEach((T, i) => { KI[T.k] = i; T.i = i; });
+
+// кто кого контрит
+const BEATS = {
+  swarm: ['rail', 'goliath', 'flak'],
+  hound: ['rail', 'wasp'],
+  rail: ['goliath', 'flak', 'arty'],
+  tesla: ['swarm', 'hound'],
+  goliath: ['hound', 'tesla', 'flak'],
+  arty: ['swarm', 'hound', 'tesla'],
+  wasp: ['goliath', 'arty', 'rail', 'tesla', 'swarm'],
+  flak: ['wasp'],
+};
+const ADV = UT.map((A) => UT.map((B) => (BEATS[A.k].includes(B.k) ? 1 : BEATS[B.k].includes(A.k) ? -1 : 0)));
+UT.forEach((T, i) => {
+  T.strong = UT.filter((_, j) => ADV[i][j] > 0).map((B) => B.name);
+  T.weak = UT.filter((_, j) => ADV[i][j] < 0).map((B) => B.name);
+});
+
+/* ---------- построения отрядов ---------- */
+const FORM = {
+  1: [[0, 0]],
+  2: [[-8.5, 0], [8.5, 0]],
+  4: [[-7.5, -7.5], [7.5, -7.5], [-7.5, 7.5], [7.5, 7.5]],
+  8: [[-11, -11], [0, -11], [11, -11], [-11, 0], [0, 0], [11, 0], [-5.5, 11], [5.5, 11]],
+  16: (() => { const a = []; for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) a.push([-12 + i * 8, -12 + j * 8]); return a; })(),
+};
+function slotCenter(side, col, row) {
+  return { x: col * SLOT + SLOT / 2, y: side === 0 ? FH - ZONE + row * SLOT + SLOT / 2 : ZONE - row * SLOT - SLOT / 2 };
+}
+function squadPositions(sq) {
+  const c = slotCenter(sq.side, sq.col, sq.row), m = sq.side === 0 ? 1 : -1;
+  return FORM[UT[sq.t].cnt].map(([ox, oy]) => [c.x + ox, c.y + oy * m]);
+}
+
+/* ---------- случайность с зерном: бой у всех считается одинаково ---------- */
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const mixSeed = (a, b) => (Math.imul(a ^ 0x9E3779B9, 0x85EBCA6B) ^ Math.imul(b + 0x632BE5AB, 0xC2B2AE35)) >>> 0;
+
+/* ---------- бой ---------- */
+const GC = 30, GW = Math.ceil(FW / GC), GH = Math.ceil(FH / GC);
+
+function createBattle(squads, seed, quiet) {
+  const rng = mulberry32(seed);
+  const b = { t: 0, rng, units: [], shells: [], ev: [], hurt: [], alive: [0, 0], over: false, res: null, quiet: !!quiet, grid: [] };
+  for (let i = 0; i < GW * GH; i++) b.grid.push([]);
+  let id = 1;
+  for (const sq of squads.slice().sort((a, c) => a.id - c.id)) {
+    const T = UT[sq.t], m = LVL_MUL[sq.lvl - 1];
+    for (const [x, y] of squadPositions(sq)) {
+      b.units.push({
+        id: id++, side: sq.side, t: sq.t, T, lvl: sq.lvl, mul: m, sq: sq.id,
+        x, y, px: x, py: y, vx: 0, vy: 0, fx: 0, fy: sq.side === 0 ? -1 : 1,
+        hp: T.hp * m, mhp: T.hp * m, r: T.r, air: T.air, alive: true,
+        cd: (T.cd || 1) * (0.15 + 0.85 * rng()), tgt: null, rt: 0, bT: 0, bTgt: null, beam: null, pend: 0,
+      });
+      b.alive[sq.side]++;
+    }
+  }
+  if (!b.alive[0] || !b.alive[1]) finish(b);
+  return b;
+}
+
+function gridBuild(b) {
+  const g = b.grid;
+  for (let i = 0; i < g.length; i++) g[i].length = 0;
+  for (const u of b.units) {
+    if (!u.alive) continue;
+    const gx = Math.min(GW - 1, Math.max(0, (u.x / GC) | 0)), gy = Math.min(GH - 1, Math.max(0, (u.y / GC) | 0));
+    g[gy * GW + gx].push(u);
+  }
+}
+function near(b, x, y, rad, fn) {
+  const x0 = Math.max(0, Math.floor((x - rad) / GC)), x1 = Math.min(GW - 1, Math.floor((x + rad) / GC));
+  const y0 = Math.max(0, Math.floor((y - rad) / GC)), y1 = Math.min(GH - 1, Math.floor((y + rad) / GC));
+  for (let gy = y0; gy <= y1; gy++) for (let gx = x0; gx <= x1; gx++) {
+    const c = b.grid[gy * GW + gx];
+    for (let i = 0; i < c.length; i++) fn(c[i]);
+  }
+}
+function edge(u, v) { const dx = v.x - u.x, dy = v.y - u.y; return Math.sqrt(dx * dx + dy * dy) - u.r - v.r; }
+function canHit(u, v) { return v.air ? u.T.aa : u.T.gnd; }
+function inRange(u, t) {
+  const e = edge(u, t);
+  return e <= u.T.rng && !(u.T.minRng && e < u.T.minRng);
+}
+function pickTarget(b, u) {
+  const T = u.T;
+  let best = null, bs = Infinity;
+  for (const v of b.units) {
+    if (!v.alive || v.side === u.side || !canHit(u, v)) continue;
+    const e = edge(u, v);
+    if (T.minRng && e < T.minRng) continue;
+    let s = e;
+    if (T.pref === 'heavy' && v.T.heavy) s -= 90;
+    else if (T.pref === 'air' && v.air) s -= 120;
+    if (s < bs) { bs = s; best = v; }
+  }
+  return best;
+}
+function nearestGround(b, u) {
+  let best = null, bd = Infinity;
+  for (const v of b.units) {
+    if (!v.alive || v.side === u.side || v.air) continue;
+    const e = edge(u, v);
+    if (e < bd) { bd = e; best = v; }
+  }
+  return best;
+}
+// урон копится за такт и применяется разом, чтобы порядок обработки юнитов ни на что не влиял
+function hurt(b, v, d) {
+  if (!v.alive) return;
+  if (!v.pend) b.hurt.push(v);
+  v.pend += d;
+}
+function resolve(b) {
+  for (const v of b.hurt) {
+    v.hp -= v.pend; v.pend = 0;
+    if (v.hp <= 0 && v.alive) {
+      v.hp = 0; v.alive = false; b.alive[v.side]--;
+      b.quiet || b.ev.push({ k: 'die', x: v.x, y: v.y, r: v.r, side: v.side, air: v.air, t: v.t });
+    }
+  }
+  b.hurt.length = 0;
+}
+
+function attack(b, u, t) {
+  const T = u.T, d = T.dmg * u.mul;
+  switch (T.atk) {
+    case 'melee':
+      hurt(b, t, d);
+      b.quiet || b.ev.push({ k: 'spark', x: (u.x + t.x) / 2, y: (u.y + t.y) / 2, side: u.side });
+      break;
+    case 'gun': case 'bolt':
+      hurt(b, t, t.T.heavy ? d * ARMOR : d);
+      b.quiet || b.ev.push({ k: T.atk, x0: u.x, y0: u.y, x1: t.x, y1: t.y, side: u.side, air: u.air });
+      break;
+    case 'rail':
+      hurt(b, t, d * (t.T.heavy ? T.vsHeavy : 1));
+      b.quiet || b.ev.push({ k: 'rail', x0: u.x, y0: u.y, x1: t.x, y1: t.y, side: u.side });
+      break;
+    case 'tesla': {
+      const pts = [u.x, u.y, t.x, t.y], hit = [t];
+      let cur = t, dd = d;
+      hurt(b, t, t.T.heavy ? dd * ARMOR : dd);
+      for (let j = 0; j < T.jumps; j++) {
+        dd *= T.fall;
+        let nb = null, nd = Infinity;
+        near(b, cur.x, cur.y, T.jumpR + 20, (v) => {
+          if (!v.alive || v.side === u.side || v.air || hit.indexOf(v) >= 0) return;
+          const e = edge(cur, v);
+          if (e <= T.jumpR && e < nd) { nd = e; nb = v; }
+        });
+        if (!nb) break;
+        hit.push(nb); hurt(b, nb, nb.T.heavy ? dd * ARMOR : dd); pts.push(nb.x, nb.y); cur = nb;
+      }
+      b.quiet || b.ev.push({ k: 'tesla', pts, side: u.side });
+      break;
+    }
+    case 'shell': {
+      const dx = t.x - u.x, dy = t.y - u.y, dist = Math.sqrt(dx * dx + dy * dy);
+      const fl = 0.35 + dist / 380;
+      const tvx = (t.x - t.px) / DT, tvy = (t.y - t.py) / DT;
+      const x1 = Math.min(FW, Math.max(0, t.x + tvx * fl + (b.rng() - 0.5) * 12));
+      const y1 = Math.min(FH, Math.max(0, t.y + tvy * fl + (b.rng() - 0.5) * 12));
+      b.shells.push({ x0: u.x, y0: u.y, x1, y1, t: 0, T: fl, dmg: d, rad: T.splash, side: u.side, done: false });
+      b.quiet || b.ev.push({ k: 'launch', x: u.x, y: u.y, fx: u.fx, fy: u.fy, side: u.side });
+      break;
+    }
+    case 'flak':
+      if (t.air) {
+        hurt(b, t, d);
+        near(b, t.x, t.y, T.splash + 12, (v) => {
+          if (v === t || !v.alive || v.side === u.side || !v.air) return;
+          const dx = v.x - t.x, dy = v.y - t.y, rr = T.splash + v.r;
+          if (dx * dx + dy * dy <= rr * rr) hurt(b, v, d * 0.5);
+        });
+        b.quiet || b.ev.push({ k: 'flak', x0: u.x, y0: u.y, x1: t.x, y1: t.y, side: u.side });
+      } else {
+        hurt(b, t, d * T.gndMul * (t.T.heavy ? ARMOR : 1));
+        b.quiet || b.ev.push({ k: 'gun', x0: u.x, y0: u.y, x1: t.x, y1: t.y, side: u.side });
+      }
+      break;
+  }
+}
+
+function beamTick(b, u, t) {
+  const T = u.T;
+  if (t && t.alive && inRange(u, t)) {
+    if (u.bTgt === t) u.bT += DT; else { u.bTgt = t; u.bT = 0; }
+    u.beam = t;
+    hurt(b, t, Math.min(T.dmg + T.ramp * u.bT, T.maxDps) * u.mul * DT);
+  } else { u.beam = null; u.bTgt = null; u.bT = 0; }
+}
+
+function step(b) {
+  if (b.over) return;
+  const U = b.units;
+  gridBuild(b);
+  // 1. цели и куда ехать
+  for (let i = 0; i < U.length; i++) {
+    const u = U[i];
+    if (!u.alive) continue;
+    const T = u.T;
+    u.px = u.x; u.py = u.y;
+    u.cd -= DT; u.rt -= DT;
+    let t = u.tgt;
+    if (!t || !t.alive || u.rt <= 0) {
+      if (!(t && t.alive && inRange(u, t))) t = pickTarget(b, u);
+      u.tgt = t;
+      u.rt = 0.35 + (u.id % 9) * 0.02;
+    }
+    let mx = 0, my = 0, sp = T.spd;
+    if (t) {
+      const dx = t.x - u.x, dy = t.y - u.y, d = Math.sqrt(dx * dx + dy * dy) || 1e-6;
+      u.fx = dx / d; u.fy = dy / d;
+      if (d - u.r - t.r > T.rng * 0.92) { mx = u.fx; my = u.fy; }
+    } else if (T.minRng) {
+      // гаубица не стреляет вплотную: отъезжает от ближайшего врага
+      const e = nearestGround(b, u);
+      if (e) {
+        const dx = u.x - e.x, dy = u.y - e.y, d = Math.sqrt(dx * dx + dy * dy) || 1e-6;
+        if (d < T.minRng + 40) { mx = dx / d; my = dy / d; sp *= 0.6; }
+      }
+    }
+    u.vx += (mx * sp - u.vx) * 0.35;
+    u.vy += (my * sp - u.vy) * 0.35;
+  }
+  // 2. движение
+  for (const u of U) if (u.alive) { u.x += u.vx * DT; u.y += u.vy * DT; }
+  // 3. расталкивание (тяжёлые почти не сдвигаются)
+  for (let i = 0; i < U.length; i++) {
+    const u = U[i];
+    if (!u.alive) continue;
+    near(b, u.x, u.y, u.r + 16, (v) => {
+      if (v.id <= u.id || !v.alive || v.air !== u.air) return;
+      const dx = v.x - u.x, dy = v.y - u.y, md = u.r + v.r + 0.5, d2 = dx * dx + dy * dy;
+      if (d2 >= md * md) return;
+      let d = Math.sqrt(d2), nx, ny;
+      if (d < 1e-6) { nx = (u.id + v.id) % 2 ? 1 : -1; ny = 0; d = 0; } else { nx = dx / d; ny = dy / d; }
+      const o = md - d, mu = u.r * u.r, mv = v.r * v.r, s = mu + mv;
+      u.x -= nx * o * (mv / s); u.y -= ny * o * (mv / s);
+      v.x += nx * o * (mu / s); v.y += ny * o * (mu / s);
+    });
+  }
+  for (const u of U) if (u.alive) {
+    u.x = Math.min(FW - u.r, Math.max(u.r, u.x));
+    u.y = Math.min(FH - u.r, Math.max(u.r, u.y));
+  }
+  // 4. атаки
+  for (const u of U) {
+    if (!u.alive) continue;
+    if (u.T.atk === 'beam') { beamTick(b, u, u.tgt); continue; }
+    const t = u.tgt;
+    if (!t || !t.alive || u.cd > 0 || !inRange(u, t)) continue;
+    u.cd = u.T.cd;
+    attack(b, u, t);
+  }
+  // 5. снаряды гаубиц
+  for (const s of b.shells) {
+    s.t += DT;
+    if (s.t < s.T) continue;
+    s.done = true;
+    near(b, s.x1, s.y1, s.rad + 16, (v) => {
+      if (!v.alive || v.side === s.side || v.air) return;
+      const dx = v.x - s.x1, dy = v.y - s.y1, e = Math.sqrt(dx * dx + dy * dy) - v.r;
+      if (e > s.rad) return;
+      hurt(b, v, s.dmg * (e <= s.rad * 0.4 ? 1 : 1 - 0.5 * (e - s.rad * 0.4) / (s.rad * 0.6)));
+    });
+    b.quiet || b.ev.push({ k: 'boom', x: s.x1, y: s.y1, r: s.rad, side: s.side });
+  }
+  if (b.shells.length) b.shells = b.shells.filter((s) => !s.done);
+  resolve(b);
+  b.t += DT;
+  if (!b.alive[0] || !b.alive[1] || b.t >= BATTLE_TIME) finish(b);
+}
+
+function finish(b) {
+  b.over = true;
+  const loss = [0, 0], left = [0, 0];
+  for (const u of b.units) if (u.alive) { loss[u.side] += u.T.loss * LOSS_MUL[u.lvl - 1]; left[u.side]++; }
+  let win = -1;
+  if (left[0] && !left[1]) win = 0;
+  else if (left[1] && !left[0]) win = 1;
+  else if (left[0] && left[1]) win = loss[0] > loss[1] ? 0 : loss[1] > loss[0] ? 1 : -1;
+  // урон стороне = ценность выживших врагов
+  b.res = { win, dmg: [Math.round(loss[1]), Math.round(loss[0])], left, timeout: !!(left[0] && left[1]) };
+}
+
+function runBattle(squads, seed) {
+  const b = createBattle(squads, seed, true);
+  while (!b.over) step(b);
+  return b;
+}
+
+/* ---------- партия ---------- */
+const DIFF = { easy: 0.8, normal: 1, hard: 1.25 };
+function newGame(seed, diff) {
+  const k = DIFF[diff] || 1;
+  return {
+    v: 1, seed: seed >>> 0, diff: diff in DIFF ? diff : 'normal', round: 1, hp: [START_HP, START_HP],
+    credits: [START_CREDITS, Math.round(START_CREDITS * k)], squads: [], nextId: 1, botRound: 0, over: null, history: [],
+  };
+}
+function upgradeCost(sq) { return sq.lvl >= 3 ? 0 : Math.round(UT[sq.t].cost * UPG_COST[sq.lvl - 1]); }
+function slotTaken(state, side, col, row) { return state.squads.some((s) => s.side === side && s.col === col && s.row === row); }
+function battleSeed(state) { return mixSeed(state.seed, state.round); }
+
+// итог раунда: урон, доход, конец партии
+function applyResult(state, res) {
+  state.hp[0] = Math.max(0, state.hp[0] - res.dmg[0]);
+  state.hp[1] = Math.max(0, state.hp[1] - res.dmg[1]);
+  state.history.push({ round: state.round, win: res.win, dmg: res.dmg.slice() });
+  const dead0 = state.hp[0] <= 0, dead1 = state.hp[1] <= 0;
+  if (dead0 || dead1 || state.round >= MAX_ROUNDS) {
+    state.over = { win: state.hp[0] > state.hp[1] ? 0 : state.hp[1] > state.hp[0] ? 1 : -1 };
+    return;
+  }
+  state.round++;
+  state.credits[0] += income(state.round);
+  state.credits[1] += Math.round(income(state.round) * (DIFF[state.diff] || 1));
+}
+
+/* ---------- бот ---------- */
+const BOT_ROWS = { swarm: [0, 1], hound: [0, 1, 2], rail: [3, 2], tesla: [0, 1], goliath: [0, 1], arty: [3, 2], wasp: [2, 3, 1], flak: [1, 2] };
+
+function botSlot(state, side, t, foeSquads, rng) {
+  const pref = BOT_ROWS[UT[t].k];
+  let tx = (COLS - 1) / 2;
+  if (foeSquads.length) tx = foeSquads.reduce((a, s) => a + s.col, 0) / foeSquads.length;
+  let best = null, bs = -Infinity;
+  for (let row = 0; row < ROWS; row++) for (let col = 0; col < COLS; col++) {
+    if (slotTaken(state, side, col, row)) continue;
+    const rank = pref.indexOf(row);
+    const s = (rank < 0 ? -6 : -rank * 2) - Math.abs(col - tx) * 0.35 + rng() * 1.8;
+    if (s > bs) { bs = s; best = { col, row }; }
+  }
+  return best;
+}
+
+// бот видит армию игрока только на начало раунда, как и игрок видит армию бота
+function botDeploy(state, side, rng) {
+  const foe = 1 - side;
+  const vis = state.squads.filter((s) => s.side === foe && s.rp < state.round);
+  const mine = state.squads.filter((s) => s.side === side);
+  const foeVal = UT.map(() => 0), myVal = UT.map(() => 0);
+  for (const s of vis) foeVal[s.t] += UT[s.t].cost * LVL_MUL[s.lvl - 1];
+  for (const s of mine) myVal[s.t] += UT[s.t].cost * LVL_MUL[s.lvl - 1];
+  const foeTotal = foeVal.reduce((a, c) => a + c, 0);
+
+  const typeScore = (t) => {
+    const T = UT[t], myTotal = myVal.reduce((a, c) => a + c, 0);
+    const spread = (myVal[t] / (myTotal + 150)) * (foeTotal ? 0.7 : 1.2);   // не складывать всё в один тип
+    if (!foeTotal) return (T.front ? 0.3 : 0) + (T.k === 'flak' ? -0.5 : 0) - spread;
+    let s = 0;
+    for (let p = 0; p < UT.length; p++) s += ADV[t][p] * foeVal[p];
+    s = s / foeTotal - spread;
+    if (T.front) {
+      const front = UT.reduce((a, U2, i) => a + (U2.front ? myVal[i] : 0), 0);
+      s += Math.max(0, 0.35 - front / (myTotal + 1)) * 1.2;  // впереди нужна «стенка»
+    }
+    if (T.k === 'flak' && !foeVal[KI.wasp]) s -= 0.6;         // ПВО без авиации у врага бесполезно
+    return s;
+  };
+
+  let credits = state.credits[side], actions = 0;
+  while (actions < 8) {
+    let best = null, bs = -Infinity;
+    for (let t = 0; t < UT.length; t++) {
+      if (UT[t].cost > credits) continue;
+      const s = typeScore(t) + (rng() - 0.5) * 0.5;
+      if (s > bs) { bs = s; best = { buy: t }; }
+    }
+    // улучшение уже стоящего отряда — альтернатива покупке
+    if (state.round >= 3) for (const sq of state.squads) {
+      if (sq.side !== side || sq.lvl >= 3) continue;
+      const c = upgradeCost(sq);
+      if (c > credits) continue;
+      const s = typeScore(sq.t) + 0.12 + (UT[sq.t].cost >= 100 ? 0.08 : 0) - 0.15 * (sq.lvl - 1) + (rng() - 0.5) * 0.5;
+      if (s > bs) { bs = s; best = { up: sq }; }
+    }
+    if (!best) break;
+    if (best.up) {
+      credits -= upgradeCost(best.up);
+      myVal[best.up.t] += UT[best.up.t].cost * (LVL_MUL[best.up.lvl] - LVL_MUL[best.up.lvl - 1]);
+      best.up.lvl++;
+    } else {
+      const slot = botSlot(state, side, best.buy, vis, rng);
+      if (!slot) break;
+      state.squads.push({ id: state.nextId++, side, t: best.buy, col: slot.col, row: slot.row, lvl: 1, rp: state.round, paid: UT[best.buy].cost });
+      credits -= UT[best.buy].cost;
+      myVal[best.buy] += UT[best.buy].cost;
+    }
+    actions++;
+  }
+  state.credits[side] = credits;
+  state.botRound = state.round;
+}
+
+
+/* ---------- умный бот: прогоняет пробные бои против видимой армии игрока ---------- */
+const unitValue = (sq) => UT[sq.t].cost * LVL_MUL[sq.lvl - 1];
+function battleScore(squads, side, seed) {
+  const b = createBattle(squads, seed, true);
+  while (!b.over && b.t < 30) step(b);
+  let v = 0;
+  for (const u of b.units) if (u.alive) v += (u.side === side ? 1 : -1) * (UT[u.t].cost / UT[u.t].cnt) * u.mul;
+  return v;
+}
+// простая оценка «кто кого контрит» по видимой армии: подсказка к пробным боям
+function botHeuristic(state, side) {
+  const foe = 1 - side, foeVal = UT.map(() => 0), myVal = UT.map(() => 0);
+  for (const q of state.squads) {
+    if (q.side === foe && q.rp < state.round) foeVal[q.t] += unitValue(q);
+    else if (q.side === side) myVal[q.t] += unitValue(q);
+  }
+  const foeTotal = foeVal.reduce((a, c) => a + c, 0), myTotal = myVal.reduce((a, c) => a + c, 0);
+  return UT.map((T, t) => {
+    let v = 0;
+    if (foeTotal) { for (let p = 0; p < UT.length; p++) v += ADV[t][p] * foeVal[p]; v /= foeTotal; }
+    v -= (myVal[t] / (myTotal + 150)) * 0.7;
+    if (T.k === 'flak' && !foeVal[KI.wasp]) v -= 0.6;
+    return v;
+  });
+}
+// генератор: отдаёт управление после каждого пробного боя, чтобы страница не подвисала
+function* botThink(state, side, rng, depth = 4) {
+  const foe = 1 - side;
+  // копии: игрок может улучшать старые отряды, пока бот думает, а бот должен видеть их на начало раунда
+  const vis = state.squads.filter((q) => q.side === foe && q.rp < state.round).map((q) => Object.assign({}, q));
+  if (!vis.length) { botDeploy(state, side, rng); return; }
+  const seed = mixSeed(state.seed ^ 0x2545F491, state.round);
+  const mine = () => state.squads.filter((q) => q.side === side);
+  let base = battleScore(vis.concat(mine()), side, seed);
+  yield;
+  for (let a = 0; a < depth; a++) {
+    const credits = state.credits[side], heur = botHeuristic(state, side), cands = [];
+    for (let t = 0; t < UT.length; t++) {
+      if (UT[t].cost > credits) continue;
+      const slot = botSlot(state, side, t, vis, rng);
+      if (slot) cands.push({ t, slot, cost: UT[t].cost, h: heur[t] });
+    }
+    const ups = mine().filter((q) => q.lvl < 3 && upgradeCost(q) <= credits).sort((x, y) => unitValue(y) - unitValue(x)).slice(0, 2);
+    for (const q of ups) cands.push({ up: q, t: q.t, cost: upgradeCost(q), h: heur[q.t] });
+    if (!cands.length) break;
+    let best = null, bs = -Infinity;
+    for (const c of cands) {
+      const army = c.up
+        ? vis.concat(mine().map((q) => (q === c.up ? Object.assign({}, q, { lvl: q.lvl + 1 }) : q)))
+        : vis.concat(mine(), [{ id: 1e6, side, t: c.t, col: c.slot.col, row: c.slot.row, lvl: 1, rp: state.round }]);
+      c.sc = battleScore(army, side, seed);
+      // прирост на кредит + немного подсказки по контрам + щепотка случайности
+      const v = (c.sc - base) / c.cost + 0.15 * c.h + (rng() - 0.5) * 0.08;
+      if (v > bs) { bs = v; best = c; }
+      yield;
+    }
+    if (best.up) best.up.lvl++;
+    else state.squads.push({ id: state.nextId++, side, t: best.t, col: best.slot.col, row: best.slot.row, lvl: 1, rp: state.round, paid: best.cost });
+    state.credits[side] -= best.cost;     // списываю сразу: перезагрузка посреди раздумий не даст потратить дважды
+    base = best.sc;
+  }
+  botDeploy(state, side, rng);            // остаток — по простой оценке; заодно отмечает, что бот походил
+}
+function botSmart(state, side, rng, depth) { const g = botThink(state, side, rng, depth); while (!g.next().done); }
+const BOT_DEPTH = { easy: 0, normal: 2, hard: 4 };
+
+
+/* ---------- онлайн: ходы игроков на раунд ---------- */
+// ход: { n: [[тип, колонка, ряд, уровень], ...] — новые отряды, u: [[id, уровень], ...] — улучшения старых }
+const clone = (x) => JSON.parse(JSON.stringify(x));
+function cyrb53(str, seed = 0) {
+  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0, ch; i < str.length; i++) { ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507); h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507); h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+function lvlCost(t, from, to) { let c = 0; for (let l = from; l < to; l++) c += Math.round(UT[t].cost * UPG_COST[l - 1]); return c; }
+// проверяет ход и применяет его; при любой ошибке ничего не меняет и возвращает false
+function applyOrders(state, side, o) {
+  const isInt = Number.isInteger;
+  if (!o || !Array.isArray(o.n) || !Array.isArray(o.u) || o.n.length > COLS * ROWS || o.u.length > COLS * ROWS) return false;
+  let cost = 0;
+  const ups = [], seen = new Set(), add = [];
+  for (const it of o.u) {
+    if (!Array.isArray(it) || it.length !== 2 || !isInt(it[0]) || !isInt(it[1])) return false;
+    const sq = state.squads.find((q) => q.id === it[0] && q.side === side && q.rp < state.round);
+    if (!sq || seen.has(sq.id) || it[1] <= sq.lvl || it[1] > 3) return false;
+    seen.add(sq.id); ups.push([sq, it[1]]); cost += lvlCost(sq.t, sq.lvl, it[1]);
+  }
+  for (let i = 0; i < o.n.length; i++) {
+    const it = o.n[i];
+    if (!Array.isArray(it) || it.length !== 4 || !it.every(isInt)) return false;
+    const [t, col, row, lvl] = it;
+    if (!UT[t] || col < 0 || col >= COLS || row < 0 || row >= ROWS || lvl < 1 || lvl > 3) return false;
+    if (slotTaken(state, side, col, row) || add.some((q) => q.col === col && q.row === row)) return false;
+    const paid = UT[t].cost + lvlCost(t, 1, lvl);
+    cost += paid;
+    add.push({ id: (state.round * 2 + side) * 100 + i, side, t, col, row, lvl, rp: state.round, paid });
+  }
+  if (cost > state.credits[side]) return false;
+  for (const [sq, l] of ups) sq.lvl = l;
+  for (const q of add) state.squads.push(q);
+  state.credits[side] -= cost;
+  return true;
+}
+function onlineGame(seed) { const st = newGame(seed, 'normal'); st.botRound = 1e9; st.online = true; return st; }
+// раунд целиком: оба хода, бой, итог. Одинаков у обоих игроков
+function resolveRound(base, o0, o1) {
+  const st = clone(base);
+  if (!applyOrders(st, 0, o0)) return { bad: 0 };
+  if (!applyOrders(st, 1, o1)) return { bad: 1 };
+  const pre = clone(st);
+  const b = runBattle(st.squads, battleSeed(st));
+  applyResult(st, b.res);
+  return { pre, post: st, res: b.res, check: cyrb53(JSON.stringify([st.hp, st.credits, b.res.left, b.res.dmg])) };
+}
+
+/* ===================== /ЯДРО ===================== */
+/* ===================== ИНТЕРФЕЙС И ГРАФИКА ===================== */
+const $ = (id) => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage');
+const cardsEl = $('cards'), infoEl = $('info'), fightBtn = $('fightBtn');
+const overlay = $('overlay'), ocard = $('ocard'), toastEl = $('toast');
+const SAVE_KEY = 'plazdarm.save.v1', PREF_KEY = 'plazdarm.prefs.v1';
+const reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+const C_ME = '#3ad7ff', C_FOE = '#ff5b7a', GOLD = '#ffd166', BODY = '#0b141f';
+// моя сторона; в онлайне гость играет за сторону 1 и смотрит на поле развёрнутым, своей армией вниз
+let MY = 0, FOE = 1, FLIP = false, mode = 'bot';
+const sideCol = (s) => (s === MY ? C_ME : C_FOE);
+const sideRgba = (s, a) => (s === MY ? `rgba(58,215,255,${a})` : `rgba(255,91,122,${a})`);
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const GENDER = { swarm: 0, hound: 2, rail: 0, tesla: 1, goliath: 0, arty: 1, wasp: 2, flak: 1 };
+const STRONG = ['Силён', 'Сильна', 'Сильны'], WEAK = ['Слаб', 'Слаба', 'Слабы'];
+
+// шрифт подгружается без блокировки страницы
+(() => {
+  const l = document.createElement('link');
+  l.rel = 'stylesheet';
+  l.href = 'https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&display=swap';
+  document.head.appendChild(l);
+})();
+
+let prefs = { speed: 1, diff: 'normal', name: '', pid: '', online: null };
+try { const p = JSON.parse(localStorage.getItem(PREF_KEY) || 'null'); if (p) prefs = Object.assign(prefs, p); } catch (e) { /* без настроек */ }
+const savePrefs = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) { /* пусто */ } };
+// постоянный id игрока; ?pid=… в адресе нужен только для отладки двух вкладок в одном браузере
+const PID = (() => {
+  const m = /[?&]pid=([\w-]{1,24})/.exec(location.search);
+  if (m) return m[1];
+  if (!prefs.pid) { prefs.pid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); savePrefs(); }
+  return prefs.pid;
+})();
+
+let state = null, phase = 'menu';
+let battle = null, acc = 0, speed = [1, 2, 4].includes(prefs.speed) ? prefs.speed : 1, afterOver = 0;
+let selType = -1, selSq = null, hover = null, press = null, drag = null, tmpId = 0;
+let W = 1, H = 1, dpr = 1, FS = 1, FX = 0, FY = 0, shX = 0, shY = 0, shake = 0;
+const sprites = new Map();
+let bg = null, decal = null, dctx = null;
+let lines = [], arcs = [], rings = [], parts = [], flashes = [];
+
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const SX = (x) => FX + shX + (FLIP ? FW - x : x) * FS;
+const SY = (y) => FY + shY + (FLIP ? FH - y : y) * FS;
+function rr(g, x, y, w, h, r) {
+  g.beginPath(); g.moveTo(x + r, y);
+  g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+}
+
+/* ---------- раскладка ---------- */
+function layout() {
+  const r = stage.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return;
+  W = Math.floor(r.width); H = Math.floor(r.height);
+  dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const pad = 8;
+  FS = Math.max(0.2, Math.min((W - pad * 2) / FW, (H - pad * 2) / FH));
+  FX = Math.round((W - FW * FS) / 2); FY = Math.round((H - FH * FS) / 2);
+  sprites.clear();
+  buildBg();
+  decal = document.createElement('canvas'); decal.width = cv.width; decal.height = cv.height; dctx = decal.getContext('2d');
+}
+
+function buildBg() {
+  bg = document.createElement('canvas'); bg.width = cv.width; bg.height = cv.height;
+  const g = bg.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const x = FX, y = FY, w = FW * FS, h = FH * FS, rad = Math.max(6, 12 * FS), zh = ZONE * FS;
+  g.save(); g.shadowColor = 'rgba(0,0,0,0.35)'; g.shadowBlur = 16; g.shadowOffsetY = 3;
+  rr(g, x, y, w, h, rad); g.fillStyle = '#070b12'; g.fill(); g.restore();
+  g.save(); rr(g, x, y, w, h, rad); g.clip();
+  const gr = g.createLinearGradient(0, y, 0, y + h);
+  gr.addColorStop(0, '#120a12'); gr.addColorStop(0.5, '#070b12'); gr.addColorStop(1, '#061019');
+  g.fillStyle = gr; g.fillRect(x, y, w, h);
+  let z = g.createLinearGradient(0, y + h - zh, 0, y + h);
+  z.addColorStop(0, 'rgba(58,215,255,0.03)'); z.addColorStop(1, 'rgba(58,215,255,0.11)');
+  g.fillStyle = z; g.fillRect(x, y + h - zh, w, zh);
+  z = g.createLinearGradient(0, y, 0, y + zh);
+  z.addColorStop(0, 'rgba(255,91,122,0.11)'); z.addColorStop(1, 'rgba(255,91,122,0.03)');
+  g.fillStyle = z; g.fillRect(x, y, w, zh);
+  const px = 1 / dpr;
+  g.lineWidth = px;
+  for (const [st, color] of [[SLOT / 2, 'rgba(110,170,255,0.05)'], [SLOT, 'rgba(110,170,255,0.10)']]) {
+    g.strokeStyle = color; g.beginPath();
+    for (let i = st; i < FW; i += st) { const xx = Math.round((x + i * FS) * dpr) / dpr + px / 2; g.moveTo(xx, y); g.lineTo(xx, y + h); }
+    for (let j = st; j < FH; j += st) { const yy = Math.round((y + j * FS) * dpr) / dpr + px / 2; g.moveTo(x, yy); g.lineTo(x + w, yy); }
+    g.stroke();
+  }
+  g.lineWidth = 1;
+  g.strokeStyle = 'rgba(58,215,255,0.38)'; g.beginPath(); g.moveTo(x, y + h - zh); g.lineTo(x + w, y + h - zh); g.stroke();
+  g.strokeStyle = 'rgba(255,91,122,0.38)'; g.beginPath(); g.moveTo(x, y + zh); g.lineTo(x + w, y + zh); g.stroke();
+  g.setLineDash([6, 6]); g.strokeStyle = 'rgba(200,220,255,0.13)';
+  g.beginPath(); g.moveTo(x, y + h / 2); g.lineTo(x + w, y + h / 2); g.stroke(); g.setLineDash([]);
+  g.restore();
+  rr(g, x + 0.5, y + 0.5, w - 1, h - 1, rad); g.strokeStyle = 'rgba(120,180,255,0.25)'; g.lineWidth = 1; g.stroke();
+}
+
+/* ---------- юниты: силуэты в мировых единицах, «нос» смотрит по оси x ---------- */
+function dot(g, x, y, rad, color) { g.save(); g.fillStyle = color; g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.fill(); g.restore(); }
+function rrp(g, x, y, w, h, r) { rr(g, x, y, w, h, r); }
+function drawShape(g, T, col, lvl) {
+  const r = T.r, core = lvl >= 3 ? GOLD : lvl === 2 ? '#ffffff' : col;
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  g.strokeStyle = col; g.fillStyle = BODY;
+  switch (T.k) {
+    case 'swarm':
+      g.lineWidth = 0.8;
+      g.beginPath(); g.moveTo(r * 1.35, 0); g.lineTo(-r * 0.9, r); g.lineTo(-r * 0.35, 0); g.lineTo(-r * 0.9, -r); g.closePath();
+      g.fill(); g.stroke(); dot(g, r * 0.1, 0, r * 0.3, core);
+      break;
+    case 'hound':
+      g.lineWidth = 0.9;
+      g.beginPath();
+      for (const a of [0.8, 2.35, -0.8, -2.35]) { g.moveTo(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5); g.lineTo(Math.cos(a) * r * 1.05, Math.sin(a) * r * 1.05); }
+      g.stroke();
+      g.beginPath(); g.arc(0, 0, r * 0.62, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.lineWidth = 1.2; g.beginPath(); g.moveTo(r * 0.4, 0); g.lineTo(r * 1.45, 0); g.stroke();
+      dot(g, 0, 0, r * 0.25, core);
+      break;
+    case 'rail':
+      g.lineWidth = 1;
+      rrp(g, -r * 0.85, -r * 0.62, r * 1.3, r * 1.24, r * 0.25); g.fill(); g.stroke();
+      g.beginPath(); g.rect(r * 0.3, -r * 0.13, r * 1.65, r * 0.26); g.fill(); g.stroke();
+      dot(g, r * 1.95, 0, r * 0.16, core); dot(g, -r * 0.2, 0, r * 0.26, core);
+      break;
+    case 'tesla':
+      g.lineWidth = 1;
+      g.beginPath(); g.arc(0, 0, r * 0.72, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.beginPath(); g.arc(0, 0, r, -2.4, 2.4); g.stroke();
+      for (const a of [0, 2.1, -2.1]) { g.beginPath(); g.moveTo(Math.cos(a) * r * 0.72, Math.sin(a) * r * 0.72); g.lineTo(Math.cos(a) * r * 1.15, Math.sin(a) * r * 1.15); g.stroke(); }
+      dot(g, 0, 0, r * 0.32, core);
+      break;
+    case 'goliath':
+      g.lineWidth = 1.3;
+      g.beginPath(); g.rect(-r * 0.95, -r * 0.92, r * 1.85, r * 0.36); g.rect(-r * 0.95, r * 0.56, r * 1.85, r * 0.36); g.fill(); g.stroke();
+      rrp(g, -r * 0.82, -r * 0.62, r * 1.6, r * 1.24, r * 0.2); g.fill(); g.stroke();
+      g.beginPath(); g.rect(r * 0.25, -r * 0.14, r, r * 0.28); g.fill(); g.stroke();
+      g.beginPath(); g.arc(-r * 0.05, 0, r * 0.42, 0, Math.PI * 2); g.fill(); g.stroke();
+      dot(g, -r * 0.05, 0, r * 0.18, core);
+      break;
+    case 'arty':
+      g.lineWidth = 1.1;
+      rrp(g, -r * 0.8, -r * 0.72, r * 1.35, r * 1.44, r * 0.18); g.fill(); g.stroke();
+      g.beginPath(); g.rect(r * 0.05, -r * 0.2, r * 1.45, r * 0.4); g.fill(); g.stroke();
+      g.beginPath(); g.rect(r * 1.35, -r * 0.27, r * 0.22, r * 0.54); g.fill(); g.stroke();
+      dot(g, -r * 0.3, 0, r * 0.24, core);
+      break;
+    case 'wasp':
+      g.lineWidth = 1;
+      g.beginPath(); g.moveTo(-r * 0.62, -r * 0.62); g.lineTo(r * 0.62, r * 0.62); g.moveTo(-r * 0.62, r * 0.62); g.lineTo(r * 0.62, -r * 0.62); g.stroke();
+      g.fillStyle = 'rgba(11,20,31,0.75)';
+      for (const [a, c] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { g.beginPath(); g.arc(a * r * 0.62, c * r * 0.62, r * 0.38, 0, Math.PI * 2); g.fill(); g.stroke(); }
+      g.fillStyle = BODY;
+      g.beginPath(); g.moveTo(r * 0.55, 0); g.lineTo(0, r * 0.3); g.lineTo(-r * 0.4, 0); g.lineTo(0, -r * 0.3); g.closePath(); g.fill(); g.stroke();
+      dot(g, r * 0.05, 0, r * 0.16, core);
+      break;
+    case 'flak':
+      g.lineWidth = 1;
+      g.beginPath(); g.arc(-r * 0.7, 0, r * 0.45, Math.PI * 0.6, Math.PI * 1.4); g.stroke();
+      g.beginPath(); g.arc(0, 0, r * 0.68, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.beginPath(); g.rect(r * 0.3, -r * 0.36, r * 1.1, r * 0.2); g.rect(r * 0.3, r * 0.16, r * 1.1, r * 0.2); g.fill(); g.stroke();
+      dot(g, 0, 0, r * 0.26, core);
+      break;
+  }
+}
+function sprite(t, side, lvl) {
+  const key = t * 10 + (side === MY ? 0 : 4) + lvl;
+  let s = sprites.get(key);
+  if (s) return s;
+  const T = UT[t], R = FS * dpr, size = Math.max(4, Math.ceil((T.r * 2.2 + 4) * 2 * R));
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d');
+  g.translate(size / 2, size / 2); g.scale(R, R);
+  const col = sideCol(side);
+  g.save(); g.shadowColor = col; g.shadowBlur = Math.max(2, 2.4 * R); drawShape(g, T, col, lvl); g.restore();
+  drawShape(g, T, col, lvl);
+  s = { c, half: size / 2 };
+  sprites.set(key, s);
+  return s;
+}
+function drawUnitAt(t, side, lvl, wx, wy, fx, fy, alpha) {
+  if (FLIP) { fx = -fx; fy = -fy; }
+  const s = sprite(t, side, lvl), len = Math.sqrt(fx * fx + fy * fy) || 1, c = fx / len, sn = fy / len;
+  ctx.setTransform(c, sn, -sn, c, SX(wx) * dpr, SY(wy) * dpr);
+  if (alpha !== 1) ctx.globalAlpha = alpha;
+  ctx.drawImage(s.c, -s.half, -s.half);
+  if (alpha !== 1) ctx.globalAlpha = 1;
+}
+
+/* ---------- эффекты ---------- */
+function addLine(x0, y0, x1, y1, color, w, life, core) { if (lines.length > 700) lines.shift(); lines.push({ x0, y0, x1, y1, color, w, life, max: life, core }); }
+function addRing(x, y, r0, r1, color, w, life) { if (rings.length > 300) rings.shift(); rings.push({ x, y, r0, r1, color, w, life, max: life }); }
+function addFlash(x, y, r, life, color) { if (flashes.length > 120) flashes.shift(); flashes.push({ x, y, r, life, max: life, color }); }
+function addParts(x, y, n, color, spd, life, size) {
+  if (reduced) n = Math.ceil(n / 2);
+  for (let i = 0; i < n && parts.length < 1600; i++) {
+    const a = Math.random() * Math.PI * 2, v = spd * (0.25 + Math.random() * 0.75), l = life * (0.6 + Math.random() * 0.6);
+    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: l, max: l, color, size: size * (0.6 + Math.random() * 0.7) });
+  }
+}
+function scorch(x, y, r) {
+  if (!dctx) return;
+  const X = (FX + (FLIP ? FW - x : x) * FS) * dpr, Y = (FY + (FLIP ? FH - y : y) * FS) * dpr, R = Math.max(1, r * FS * dpr);
+  const g = dctx.createRadialGradient(X, Y, 0, X, Y, R);
+  g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.55, 'rgba(25,12,6,0.25)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  dctx.fillStyle = g; dctx.beginPath(); dctx.arc(X, Y, R, 0, Math.PI * 2); dctx.fill();
+}
+function bump(v) { if (!reduced) shake = Math.min(6, shake + v); }
+function clearFx() { lines = []; arcs = []; rings = []; parts = []; flashes = []; shake = 0; }
+function clearDecal() { if (dctx) dctx.clearRect(0, 0, decal.width, decal.height); }
+
+function onEvent(e) {
+  switch (e.k) {
+    case 'gun':
+      addLine(e.x0, e.y0, e.x1, e.y1, sideRgba(e.side, 0.85), 1.1, 0.07, '#fff3c4');
+      if (Math.random() < 0.35) addParts(e.x1, e.y1, 1, '#ffe7a3', 40, 0.15, 1);
+      break;
+    case 'bolt':
+      addLine(e.x0, e.y0, e.x1, e.y1, sideRgba(e.side, 1), 1.7, 0.09, '#ffffff');
+      addParts(e.x1, e.y1, 1, sideCol(e.side), 45, 0.18, 1.1);
+      break;
+    case 'rail':
+      addLine(e.x0, e.y0, e.x1, e.y1, sideCol(e.side), 3.4, 0.3, '#ffffff');
+      addFlash(e.x1, e.y1, 11, 0.16, '#ffffff');
+      addParts(e.x1, e.y1, 6, sideCol(e.side), 70, 0.35, 1.4);
+      break;
+    case 'tesla':
+      arcs.push({ pts: e.pts, side: e.side, life: 0.17, max: 0.17 });
+      for (let i = 2; i < e.pts.length; i += 2) addParts(e.pts[i], e.pts[i + 1], 2, e.side === 0 ? '#bdeeff' : '#ffc3d1', 45, 0.22, 1.1);
+      break;
+    case 'launch':
+      addFlash(e.x + e.fx * 13, e.y + e.fy * 13, 8, 0.1, '#ffd9a0');
+      addParts(e.x + e.fx * 13, e.y + e.fy * 13, 3, 'rgba(180,170,160,0.6)', 25, 0.5, 2);
+      break;
+    case 'boom':
+      addRing(e.x, e.y, 3, e.r * 1.15, '#ffb347', 2.2, 0.35);
+      addFlash(e.x, e.y, e.r * 0.95, 0.15, '#ffe2b0');
+      addParts(e.x, e.y, 14, '#ffae42', 110, 0.5, 1.8);
+      scorch(e.x, e.y, e.r * 0.85);
+      bump(2.2);
+      break;
+    case 'flak':
+      addLine(e.x0, e.y0, e.x1, e.y1, sideRgba(e.side, 0.55), 1, 0.06);
+      addRing(e.x1, e.y1, 2, 14, '#ffe08a', 1.6, 0.25);
+      addParts(e.x1, e.y1, 5, '#ffd27a', 70, 0.3, 1.3);
+      break;
+    case 'spark':
+      if (Math.random() < 0.5) addParts(e.x, e.y, 1, sideCol(e.side), 50, 0.16, 1);
+      break;
+    case 'die':
+      addParts(e.x, e.y, Math.round(4 + e.r * 1.4), e.side === 0 ? '#8ef0ff' : '#ff9db0', 70 + e.r * 6, 0.55, 1.5);
+      addParts(e.x, e.y, Math.round(2 + e.r * 0.6), '#ffcf7a', 90, 0.4, 1.8);
+      addRing(e.x, e.y, e.r * 0.5, e.r * 2.2, sideRgba(e.side, 0.9), 1.6, 0.3);
+      if (!e.air) scorch(e.x, e.y, e.r * 1.3);
+      if (e.r >= 9) { addFlash(e.x, e.y, e.r * 1.6, 0.18, '#ffffff'); bump(1.2); }
+      break;
+  }
+}
+function updateFx(dt) {
+  if (dt <= 0) return;
+  for (const l of lines) l.life -= dt;
+  for (const a of arcs) a.life -= dt;
+  for (const r of rings) r.life -= dt;
+  for (const f of flashes) f.life -= dt;
+  const k = Math.max(0, 1 - 3 * dt);
+  for (const p of parts) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= k; p.vy *= k; }
+  if (lines.length) lines = lines.filter((l) => l.life > 0);
+  if (arcs.length) arcs = arcs.filter((a) => a.life > 0);
+  if (rings.length) rings = rings.filter((r) => r.life > 0);
+  if (flashes.length) flashes = flashes.filter((f) => f.life > 0);
+  if (parts.length) parts = parts.filter((p) => p.life > 0);
+  shake = Math.max(0, shake - dt * 14);
+  shX = shake ? (Math.random() - 0.5) * shake : 0;
+  shY = shake ? (Math.random() - 0.5) * shake : 0;
+}
+function drawFx() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const lw = Math.max(0.7, FS);
+  for (const l of lines) {
+    ctx.globalAlpha = l.life / l.max;
+    ctx.strokeStyle = l.color; ctx.lineWidth = l.w * lw;
+    ctx.beginPath(); ctx.moveTo(SX(l.x0), SY(l.y0)); ctx.lineTo(SX(l.x1), SY(l.y1)); ctx.stroke();
+    if (l.core) { ctx.strokeStyle = l.core; ctx.lineWidth = Math.max(0.6, l.w * 0.35 * lw); ctx.stroke(); }
+  }
+  for (const a of arcs) {
+    const p = a.pts;
+    ctx.globalAlpha = a.life / a.max;
+    ctx.beginPath(); ctx.moveTo(SX(p[0]), SY(p[1]));
+    for (let i = 2; i < p.length; i += 2) {
+      const x0 = p[i - 2], y0 = p[i - 1], x1 = p[i], y1 = p[i + 1], dx = x1 - x0, dy = y1 - y0;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / len, ny = dx / len, amp = Math.min(9, len * 0.22);
+      for (let q = 1; q < 4; q++) { const tt = q / 4, j = (Math.random() - 0.5) * amp; ctx.lineTo(SX(x0 + dx * tt + nx * j), SY(y0 + dy * tt + ny * j)); }
+      ctx.lineTo(SX(x1), SY(y1));
+    }
+    ctx.strokeStyle = a.side === 0 ? 'rgba(120,220,255,0.95)' : 'rgba(255,120,160,0.95)';
+    ctx.lineWidth = 2.4 * lw; ctx.stroke();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.9 * lw; ctx.stroke();
+  }
+  for (const r of rings) {
+    const t = 1 - r.life / r.max, e = 1 - (1 - t) * (1 - t);
+    ctx.globalAlpha = r.life / r.max;
+    ctx.strokeStyle = r.color; ctx.lineWidth = r.w * lw;
+    ctx.beginPath(); ctx.arc(SX(r.x), SY(r.y), Math.max(0.5, (r.r0 + (r.r1 - r.r0) * e) * FS), 0, Math.PI * 2); ctx.stroke();
+  }
+  for (const f of flashes) {
+    const a = f.life / f.max, R = Math.max(1, f.r * FS * (1.2 - a * 0.4));
+    const g = ctx.createRadialGradient(SX(f.x), SY(f.y), 0, SX(f.x), SY(f.y), R);
+    g.addColorStop(0, f.color); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = a; ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(SX(f.x), SY(f.y), R, 0, Math.PI * 2); ctx.fill();
+  }
+  for (const p of parts) {
+    ctx.globalAlpha = p.life / p.max; ctx.fillStyle = p.color;
+    const s = p.size * lw; ctx.fillRect(SX(p.x) - s / 2, SY(p.y) - s / 2, s, s);
+  }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+/* ---------- кадр ---------- */
+function slotRect(side, col, row) {
+  const c = slotCenter(side, col, row), s = SLOT * FS;
+  return { x: SX(c.x) - s / 2, y: SY(c.y) - s / 2, s };
+}
+function drawRange(t, side, col, row) {
+  const T = UT[t];
+  if (T.rng < 10) return;
+  const c = slotCenter(side, col, row);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.setLineDash([4, 5]); ctx.lineWidth = 1;
+  ctx.strokeStyle = sideRgba(side, 0.5);
+  ctx.beginPath(); ctx.arc(SX(c.x), SY(c.y), (T.rng + T.r) * FS, 0, Math.PI * 2); ctx.stroke();
+  if (T.minRng) { ctx.strokeStyle = 'rgba(255,209,102,0.45)'; ctx.beginPath(); ctx.arc(SX(c.x), SY(c.y), (T.minRng + T.r) * FS, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.setLineDash([]);
+}
+function drawSquad(sq, alpha, col, row) {
+  const at = col === undefined ? sq : { side: sq.side, t: sq.t, col, row };
+  for (const [x, y] of squadPositions(at)) drawUnitAt(sq.t, sq.side, sq.lvl, x, y, 0, sq.side === 0 ? -1 : 1, alpha);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const R = slotRect(sq.side, at.col, at.row);
+  if (sq.lvl > 1) {
+    ctx.fillStyle = sq.lvl >= 3 ? GOLD : '#ffffff';
+    for (let i = 0; i < sq.lvl - 1; i++) {
+      const cx = R.x + R.s - 5 - i * 6, cy = R.y + R.s - 5, q = Math.max(2, 2.4 * FS);
+      ctx.beginPath(); ctx.moveTo(cx, cy - q); ctx.lineTo(cx + q, cy); ctx.lineTo(cx, cy + q); ctx.lineTo(cx - q, cy); ctx.closePath(); ctx.fill();
+    }
+  }
+}
+function drawDeploy() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const active = phase === 'deploy' && (selType >= 0 || (drag && drag.on));
+  ctx.lineWidth = 1;
+  for (let row = 0; row < ROWS; row++) for (let col = 0; col < COLS; col++) {
+    if (slotTaken(state, MY, col, row)) continue;
+    const R = slotRect(MY, col, row);
+    ctx.strokeStyle = active ? 'rgba(58,215,255,0.3)' : 'rgba(58,215,255,0.1)';
+    rr(ctx, R.x + 2, R.y + 2, R.s - 4, R.s - 4, 4); ctx.stroke();
+  }
+  for (const sq of state.squads) {
+    if (sq.side === FOE && sq.rp >= state.round) continue;  // новые отряды соперника видны только в бою
+    if (drag && drag.on && drag.sq === sq) continue;
+    drawSquad(sq, 1);
+    if (sq.side === MY && sq.rp === state.round && phase === 'deploy') {   // поставлен в этом раунде: можно двигать и убрать
+      const R = slotRect(MY, sq.col, sq.row);
+      ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(58,215,255,0.45)';
+      rr(ctx, R.x + 2, R.y + 2, R.s - 4, R.s - 4, 4); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+  if (drag && drag.on) {
+    if (drag.sl && !slotTaken(state, MY, drag.sl.col, drag.sl.row)) { drawSquad(drag.sq, 0.6, drag.sl.col, drag.sl.row); drawRange(drag.sq.t, MY, drag.sl.col, drag.sl.row); }
+    else if (drag.sl) { const R = slotRect(MY, drag.sl.col, drag.sl.row); ctx.strokeStyle = C_FOE; rr(ctx, R.x + 2, R.y + 2, R.s - 4, R.s - 4, 4); ctx.stroke(); }
+  } else if (hover && selType >= 0 && phase === 'deploy') {
+    if (!slotTaken(state, MY, hover.col, hover.row)) {
+      drawSquad({ t: selType, side: MY, lvl: 1 }, 0.45, hover.col, hover.row);
+      drawRange(selType, MY, hover.col, hover.row);
+    }
+  }
+  if (selSq) {
+    const R = slotRect(selSq.side, selSq.col, selSq.row);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineWidth = 2; ctx.strokeStyle = sideCol(selSq.side);
+    rr(ctx, R.x + 1, R.y + 1, R.s - 2, R.s - 2, 5); ctx.stroke();
+    drawRange(selSq.t, selSq.side, selSq.col, selSq.row);
+  }
+}
+function drawBattle(a) {
+  const U = battle.units, lerp = (p, c) => p + (c - p) * a;
+  for (const u of U) if (u.alive && !u.air) drawUnitAt(u.t, u.side, u.lvl, lerp(u.px, u.x), lerp(u.py, u.y), u.fx, u.fy, 1);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // лучи Голиафов
+  ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+  for (const u of U) {
+    if (!u.alive || !u.beam || !u.beam.alive) continue;
+    const t = u.beam, k = Math.min(1, u.bT / 4.5), ux = lerp(u.px, u.x) + u.fx * u.r * 1.2, uy = lerp(u.py, u.y) + u.fy * u.r * 1.2;
+    const tx = lerp(t.px, t.x), ty = lerp(t.py, t.y), fl = 0.75 + Math.random() * 0.25;
+    ctx.globalAlpha = 0.6 * fl; ctx.strokeStyle = sideCol(u.side); ctx.lineWidth = (1.2 + 3.2 * k) * FS;
+    ctx.beginPath(); ctx.moveTo(SX(ux), SY(uy)); ctx.lineTo(SX(tx), SY(ty)); ctx.stroke();
+    ctx.globalAlpha = fl; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = (0.4 + 1.2 * k) * FS; ctx.stroke();
+    if (Math.random() < 0.3) addParts(tx, ty, 1, sideCol(u.side), 40, 0.2, 1.2);
+  }
+  // снаряды гаубиц: летят по дуге
+  for (const s of battle.shells) {
+    const p = Math.min(1, (s.t + a * DT) / s.T), x = s.x0 + (s.x1 - s.x0) * p, y = s.y0 + (s.y1 - s.y0) * p;
+    const dist = Math.sqrt((s.x1 - s.x0) ** 2 + (s.y1 - s.y0) ** 2), h = Math.sin(Math.PI * p) * Math.min(80, dist * 0.28);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    const sx = SX(x), sy = SY(y), hy = sy - h * FS;
+    ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.arc(sx, sy, 1.8 * FS, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(sx, hy, 0, sx, hy, 5 * FS);
+    g.addColorStop(0, '#fff2c9'); g.addColorStop(0.4, 'rgba(255,170,70,0.8)'); g.addColorStop(1, 'rgba(255,120,40,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, hy, 5 * FS, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  // авиация: тень на земле, потом сам дрон
+  ctx.fillStyle = 'rgba(0,0,0,0.42)';
+  for (const u of U) if (u.alive && u.air) { ctx.beginPath(); ctx.ellipse(SX(lerp(u.px, u.x)) + 3 * FS, SY(lerp(u.py, u.y)) + 8 * FS, u.r * 0.9 * FS, u.r * 0.55 * FS, 0, 0, Math.PI * 2); ctx.fill(); }
+  for (const u of U) if (u.alive && u.air) drawUnitAt(u.t, u.side, u.lvl, lerp(u.px, u.x), lerp(u.py, u.y), u.fx, u.fy, 1);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // здоровье крупных юнитов
+  for (const u of U) {
+    if (!u.alive || u.r < 6 || u.hp >= u.mhp) continue;
+    const x = SX(lerp(u.px, u.x)), y = SY(lerp(u.py, u.y)) - (u.r + 4) * FS, w = u.r * 2 * FS, h = Math.max(2, 2.2 * FS);
+    ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(x - w / 2, y, w, h);
+    ctx.fillStyle = sideCol(u.side); ctx.fillRect(x - w / 2, y, w * Math.max(0, u.hp / u.mhp), h);
+  }
+}
+function render(a) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!bg) return;
+  const ox = Math.round(shX * dpr), oy = Math.round(shY * dpr);
+  ctx.drawImage(bg, ox, oy);
+  if (decal) ctx.drawImage(decal, ox, oy);
+  if (battle) drawBattle(a);
+  else if (state) drawDeploy();
+  drawFx();
+}
+
+let last = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  const rdt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+  last = now;
+  let a = 1;
+  if (battle && phase === 'battle') {
+    if (overlay.hidden) {
+      if (!battle.over) {
+        acc += rdt * speed;
+        let n = 0;
+        while (acc >= DT && !battle.over && n < 10) {
+          step(battle); acc -= DT; n++;
+          for (const e of battle.ev) onEvent(e);
+          battle.ev.length = 0;
+        }
+        if (n >= 10) acc = Math.min(acc, DT);
+        updateTally();
+      } else if ((afterOver += rdt) > 1.1) endBattle();
+      updateFx(rdt * speed);
+    }
+    a = battle && !battle.over ? acc / DT : 1;
+  } else updateFx(rdt);
+  render(a);
+}
+
+/* ---------- бот думает в фоне, пока игрок расставляет армию ---------- */
+let botJob = null, botTimer = 0;
+function startBot() {
+  stopBot();
+  if (mode !== 'bot' || state.botRound >= state.round) return;
+  const rng = mulberry32(mixSeed(state.seed ^ 0x5bd1e995, state.round));
+  const depth = BOT_DEPTH[state.diff] ?? 2;
+  if (!depth) { botDeploy(state, 1, rng); save(); return; }
+  botJob = botThink(state, 1, rng, depth);
+  pumpBot();
+}
+function pumpBot() {
+  if (!botJob) return;
+  const t0 = performance.now();
+  while (performance.now() - t0 < 10) {
+    if (botJob.next().done) { botJob = null; save(); return; }
+  }
+  botTimer = setTimeout(pumpBot, 16);
+}
+function finishBot() {
+  clearTimeout(botTimer);
+  if (botJob) { while (!botJob.next().done); botJob = null; save(); }
+}
+function stopBot() { clearTimeout(botTimer); botJob = null; }
+
+/* ---------- ход игры ---------- */
+function beginDeploy() {
+  phase = 'deploy';
+  battle = null;
+  startBot();
+  save();
+  selType = -1; selSq = null; drag = null;
+  updateHud(); showPanel(); renderCards(); renderInfo();
+}
+function startBattle() {
+  if (mode !== 'bot' || phase !== 'deploy' || !overlay.hidden) return;
+  if (!state.squads.some((s) => s.side === MY)) { toast('Сначала поставь хотя бы один отряд'); return; }
+  if (botJob) {
+    // бот ещё не закончил: даю отрисоваться подсказке и доделываю его ход разом
+    toast('Бот заканчивает расстановку…');
+    fightBtn.disabled = true;
+    setTimeout(() => { finishBot(); startBattle(); }, 40);
+    return;
+  }
+  save();
+  launchBattle(state);
+}
+function launchBattle(st) {
+  selType = -1; selSq = null; drag = null; hover = null;
+  battle = createBattle(st.squads, battleSeed(st), false);
+  acc = 0; afterOver = 0;
+  clearFx(); clearDecal();
+  phase = 'battle';
+  showPanel(); updateHud(); updateTally(true);
+}
+function endBattle() {
+  if (mode === 'online') { endOnlineBattle(); return; }
+  const res = battle.res, round = state.round, shown = { round, credits: state.credits[MY] };
+  applyResult(state, res);
+  updateHud(state.over ? null : shown);
+  if (state.over) { phase = 'over'; clearSave(); showPanel(); showOver(); }
+  else { phase = 'result'; save(); showPanel(); showResult(res, round); }
+}
+function skipBattle() {
+  if (!battle || battle.over || phase !== 'battle') return;
+  battle.quiet = true;
+  let guard = 0;
+  while (!battle.over && guard++ < 6000) step(battle);
+  battle.ev.length = 0;
+  clearFx();
+  afterOver = 0.7;
+  updateTally(true);
+}
+function newRun(diff) {
+  stopBot();
+  prefs.diff = diff; savePrefs();
+  state = newGame((Math.random() * 4294967296) >>> 0, diff);
+  closeCard();
+  clearFx(); clearDecal();
+  beginDeploy();
+}
+
+/* ---------- правка армии ---------- */
+function afterEdit() {
+  if (mode === 'online') saveDraft(); else save();
+  updateHud(); renderCards(); renderInfo();
+}
+function placeSquad(t, col, row) {
+  const T = UT[t];
+  if (T.cost > state.credits[MY]) { toast('Не хватает кредитов'); return; }
+  if (slotTaken(state, MY, col, row)) { toast('Клетка занята'); return; }
+  state.credits[MY] -= T.cost;
+  const id = mode === 'online' ? 900000 + (++tmpId) : state.nextId++;
+  state.squads.push({ id, side: MY, t, col, row, lvl: 1, rp: state.round, paid: T.cost });
+  afterEdit();
+}
+function upgradeSquad(sq) {
+  if (!sq || sq.side !== MY || sq.lvl >= 3 || phase !== 'deploy') return;
+  const c = upgradeCost(sq);
+  if (c > state.credits[MY]) { toast('Не хватает кредитов'); return; }
+  state.credits[MY] -= c; sq.lvl++;
+  if (sq.rp === state.round) sq.paid += c;
+  afterEdit();
+}
+function removeSquad(sq) {
+  if (!sq || sq.side !== MY || phase !== 'deploy') return;
+  if (sq.rp !== state.round) { toast('Отряды с прошлых раундов остаются на поле'); return; }
+  state.credits[MY] += sq.paid;
+  state.squads.splice(state.squads.indexOf(sq), 1);
+  selSq = null;
+  afterEdit();
+}
+
+/* ---------- ввод на поле ---------- */
+function toWorld(e) {
+  const r = cv.getBoundingClientRect();
+  let x = (e.clientX - r.left - FX) / FS, y = (e.clientY - r.top - FY) / FS;
+  if (FLIP) { x = FW - x; y = FH - y; }
+  return { x, y };
+}
+function slotAt(w) {
+  if (w.x < 0 || w.x >= FW) return null;
+  const col = Math.floor(w.x / SLOT);
+  if (w.y >= FH - ZONE && w.y < FH) return { side: 0, col, row: Math.floor((w.y - (FH - ZONE)) / SLOT) };
+  if (w.y >= 0 && w.y < ZONE) return { side: 1, col, row: Math.floor((ZONE - w.y) / SLOT) };
+  return null;
+}
+function squadIn(sl) {
+  if (!sl || !state) return null;
+  return state.squads.find((s) => s.side === sl.side && s.col === sl.col && s.row === sl.row && !(s.side === FOE && s.rp >= state.round)) || null;
+}
+function tapSlot(sl) {
+  const sq = squadIn(sl);
+  if (sq) { selSq = selSq === sq ? null : sq; selType = -1; renderCards(); renderInfo(); return; }
+  if (!sl || sl.side === FOE || phase !== 'deploy') {
+    if (selSq || selType >= 0) { selSq = null; selType = -1; renderCards(); renderInfo(); }
+    return;
+  }
+  if (selType < 0) { if (selSq) { selSq = null; renderInfo(); } else toast('Сначала выбери юнита'); return; }
+  placeSquad(selType, sl.col, sl.row);
+}
+const canTap = () => !!state && overlay.hidden && (phase === 'deploy' || phase === 'wait');
+cv.addEventListener('pointerdown', (e) => {
+  if (!canTap() || (e.button && e.button > 0)) return;
+  const sl = slotAt(toWorld(e)), sq = squadIn(sl);
+  press = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  drag = phase === 'deploy' && sq && sq.side === MY && sq.rp === state.round ? { sq, on: false, sl: null } : null;
+  if (drag) { try { cv.setPointerCapture(e.pointerId); } catch (err) { /* пусто */ } }
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!canTap()) { hover = null; return; }
+  const sl = slotAt(toWorld(e));
+  if (e.pointerType === 'mouse') hover = sl && sl.side === MY ? sl : null;
+  if (drag && press && e.pointerId === press.id) {
+    if (!drag.on && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8) drag.on = true;
+    if (drag.on) drag.sl = sl && sl.side === MY ? sl : null;
+  }
+  cv.style.cursor = hover && (selType >= 0 || squadIn(hover)) ? 'pointer' : '';
+});
+cv.addEventListener('pointerleave', () => { hover = null; });
+cv.addEventListener('pointerup', (e) => {
+  if (!canTap() || !press || e.pointerId !== press.id) return;
+  const sl = slotAt(toWorld(e));
+  if (drag && drag.on) {
+    const d = drag;
+    drag = null; press = null;
+    if (d.sl && !slotTaken(state, MY, d.sl.col, d.sl.row)) {
+      d.sq.col = d.sl.col; d.sq.row = d.sl.row; selSq = d.sq; selType = -1;
+      afterEdit();
+      return;
+    }
+    if (d.sl && squadIn(d.sl) !== d.sq) toast('Клетка занята');
+    renderCards(); renderInfo();
+    return;
+  }
+  drag = null; press = null;
+  tapSlot(sl);
+});
+cv.addEventListener('pointercancel', () => { drag = null; press = null; });
+cv.addEventListener('contextmenu', (e) => e.preventDefault());
+
+/* ---------- панель ---------- */
+const ICON = {
+  swarm: { s: 1.9, at: [[-8, 6], [0, 7], [8, 6], [-4, -4], [4, -4]] },
+  hound: { s: 1.55, at: [[-8, 5], [8, 5], [0, -6]] },
+  rail: { s: 1.15, at: [[0, 3]] },
+  tesla: { s: 1.35, at: [[0, 0]] },
+  goliath: { s: 0.78, at: [[0, 1]] },
+  arty: { s: 1.05, at: [[0, 3]] },
+  wasp: { s: 1.2, at: [[-7, 5], [7, -5]] },
+  flak: { s: 1.3, at: [[0, 2]] },
+};
+function drawCardIcon(c, t) {
+  const T = UT[t], d = Math.min(3, window.devicePixelRatio || 1), size = 46, I = ICON[T.k];
+  c.width = c.height = Math.round(size * d);
+  const g = c.getContext('2d');
+  for (const [ox, oy] of I.at) {
+    g.setTransform(d, 0, 0, d, 0, 0);
+    g.translate(size / 2 + ox, size / 2 + oy); g.rotate(-Math.PI / 2); g.scale(I.s, I.s);
+    g.save(); g.shadowColor = C_ME; g.shadowBlur = 5 * d; drawShape(g, T, C_ME, 1); g.restore();
+    drawShape(g, T, C_ME, 1);
+  }
+}
+function renderCards() {
+  if (!cardsEl.childElementCount) {
+    UT.forEach((T, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'unit'; b.dataset.t = String(i);
+      b.setAttribute('aria-label', `${T.name}: ${T.cnt} шт. за ${T.cost}`);
+      b.innerHTML = `<span class="hk">${i + 1}</span><canvas aria-hidden="true"></canvas><span class="nm">${T.name}</span><span class="meta"><span>×${T.cnt}</span><span class="pr">${T.cost}</span></span>`;
+      b.addEventListener('click', () => selectType(i));
+      cardsEl.appendChild(b);
+      drawCardIcon(b.querySelector('canvas'), i);
+    });
+  }
+  const cr = state ? state.credits[MY] : 0;
+  for (const b of cardsEl.children) {
+    const i = +b.dataset.t;
+    b.classList.toggle('sel', i === selType);
+    b.classList.toggle('poor', UT[i].cost > cr);
+    b.setAttribute('aria-pressed', i === selType ? 'true' : 'false');
+  }
+}
+function selectType(i) {
+  if (phase !== 'deploy') return;
+  selType = selType === i ? -1 : i;
+  selSq = null;
+  renderCards(); renderInfo();
+}
+function chips(t, lvl) {
+  const T = UT[t], m = LVL_MUL[lvl - 1], hp = Math.round(T.hp * m * T.cnt), per = Math.round((T.dmg * m * T.cnt) / (T.cd || 1));
+  const dmg = T.atk === 'beam' ? `${Math.round(T.dmg * m)}–${Math.round(T.maxDps * m)}/с`
+    : T.atk === 'shell' ? `${per}/с по площади` : T.atk === 'tesla' ? `${per}/с, цепью` : T.atk === 'flak' ? `${per}/с по воздуху` : `${per}/с`;
+  const range = T.rng < 10 ? 'вплотную' : T.minRng ? `${T.minRng}–${T.rng}` : String(T.rng);
+  const tg = T.air ? 'летает, бьёт землю' : T.k === 'flak' ? 'цели: воздух' : T.aa ? 'цели: земля и воздух' : 'цели: только земля';
+  return `<div class="chips"><span>Здоровье ${hp}</span><span>Урон ${dmg}</span><span>Дальность ${range}</span><span>${tg}</span>${T.heavy ? '<span>тяжёлая броня</span>' : ''}</div>`;
+}
+function vsLines(t) {
+  const T = UT[t], g = GENDER[T.k];
+  return `<div class="vs"><div class="good">${STRONG[g]} против: <b>${T.strong.join(', ')}</b></div><div class="bad">${WEAK[g]} против: <b>${T.weak.join(', ')}</b></div></div>`;
+}
+const foeWord = () => (mode === 'online' ? 'соперника' : 'бота');
+function renderInfo() {
+  if (!state || (phase !== 'deploy' && phase !== 'wait')) return;
+  let h = '';
+  if (selSq) {
+    const sq = selSq, T = UT[sq.t], mine = sq.side === MY;
+    h += `<div class="head"><b style="color:var(${mine ? '--me' : '--foe'})">${T.name}</b><span class="tag">${mine ? 'твой отряд' : 'отряд ' + foeWord()}</span>${sq.lvl > 1 ? `<span class="lvl">уровень ${sq.lvl}</span>` : ''}</div>`;
+    if (mine && phase === 'deploy') {   // кнопки наверху: на телефоне блок сведений невысокий
+      h += '<div class="row-btns" style="margin-top:4px">';
+      if (sq.lvl < 3) { const c = upgradeCost(sq); h += `<button class="btn sm" id="upBtn" type="button"${c > state.credits[MY] ? ' disabled' : ''}>Улучшить за ${c}</button>`; }
+      if (sq.rp === state.round) h += `<button class="btn sm danger" id="rmBtn" type="button">Убрать и вернуть ${sq.paid}</button>`;
+      else h += '<span class="hint" style="align-self:center;font-size:12px">Стоит с прошлых раундов, двигать нельзя</span>';
+      h += '</div>';
+    }
+    h += `<div class="desc">${T.desc}</div>${vsLines(sq.t)}${chips(sq.t, sq.lvl)}`;
+  } else if (selType >= 0) {
+    const T = UT[selType];
+    h += `<div class="head"><b>${T.name}</b><span class="tag">${T.cnt} шт. за ${T.cost}</span></div><div class="desc">${T.desc}</div>${vsLines(selType)}${chips(selType, 1)}`;
+  } else if (phase === 'wait') {
+    h += '<div class="hint">Ход отправлен и зафиксирован. Бой начнётся, как только соперник тоже будет готов.</div>';
+  } else if (state.round === 1 && !state.squads.some((s) => s.side === MY)) {
+    h += '<div class="hint">Выбери юнита и коснись клетки на нижней половине поля. Потом жми «' + (mode === 'online' ? 'Готов' : 'В бой') + '».</div>';
+  } else {
+    h += `<div class="hint">Новые отряды ${foeWord()} покажутся только в бою. Коснись отряда, чтобы улучшить его или узнать, кого он контрит.</div>`;
+  }
+  infoEl.innerHTML = h;
+  const up = $('upBtn'), rm = $('rmBtn');
+  if (up) up.onclick = () => upgradeSquad(selSq);
+  if (rm) rm.onclick = () => removeSquad(selSq);
+}
+function updateHud(o) {
+  if (!state) return;
+  $('roundLbl').textContent = `Раунд ${o ? o.round : state.round}`;
+  $('hpMe').textContent = state.hp[MY];
+  $('hpFoe').textContent = state.hp[FOE];
+  $('hpMeBar').style.width = clamp((100 * state.hp[MY]) / START_HP, 0, 100) + '%';
+  $('hpFoeBar').style.width = clamp((100 * state.hp[FOE]) / START_HP, 0, 100) + '%';
+  $('credits').textContent = o ? o.credits : state.credits[MY];
+}
+let tallyCache = '';
+function updateTally(force) {
+  if (!battle) return;
+  const s = battle.alive[0] + ':' + battle.alive[1];
+  if (!force && s === tallyCache) return;
+  tallyCache = s;
+  $('aliveMe').textContent = battle.alive[MY];
+  $('aliveFoe').textContent = battle.alive[FOE];
+  $('aliveFoeLbl').textContent = mode === 'online' ? 'Соперник' : 'Бот';
+  const cnt = [UT.map(() => 0), UT.map(() => 0)];
+  for (const u of battle.units) if (u.alive) cnt[u.side][u.t]++;
+  for (const [side, id] of [[MY, 'armyMe'], [FOE, 'armyFoe']]) {
+    const list = UT.map((T, i) => (cnt[side][i] ? `<span>${T.name} <b>${cnt[side][i]}</b></span>` : '')).join('');
+    $(id).innerHTML = list || '<span class="none">никого не осталось</span>';
+  }
+}
+function showPanel() {
+  const dep = phase !== 'battle' && phase !== 'result' && phase !== 'over';
+  document.body.classList.toggle('online', mode === 'online');
+  $('deployUI').hidden = !dep;
+  $('battleUI').hidden = dep;
+  $('skipBtn').disabled = phase !== 'battle';
+  fightBtn.textContent = mode === 'online' ? (phase === 'wait' ? 'Ждём соперника…' : 'Готов') : 'В бой';
+  fightBtn.disabled = phase !== 'deploy';
+  $('oppLine').hidden = mode !== 'online';
+  $('foeName').textContent = mode === 'online' ? (on && on.oppName) || 'Соперник' : 'Бот';
+  for (const b of $('speedSeg').children) b.classList.toggle('on', +b.dataset.speed === speed);
+}
+let toastTimer = 0;
+function toast(msg, ms) {
+  toastEl.textContent = msg; toastEl.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastEl.hidden = true; }, ms || 1800);
+}
+
+/* ---------- окна ---------- */
+function openCard(html, cls, kind) {
+  ocard.className = 'ocard' + (cls ? ' ' + cls : '');
+  ocard.dataset.kind = kind || '';
+  ocard.innerHTML = html;
+  overlay.hidden = false;
+  const p = ocard.querySelector('.btn.primary');
+  if (p && !ocard.querySelector('.inp:focus')) { try { p.focus({ preventScroll: true }); } catch (e) { /* пусто */ } }
+}
+function closeCard() { overlay.hidden = true; ocard.dataset.kind = ''; }
+function diffSeg() {
+  return `<div class="label">Сложность</div><div class="seg" id="diffSeg">${[['easy', 'Лёгкая'], ['normal', 'Обычная'], ['hard', 'Сложная']]
+    .map(([k, n]) => `<button type="button" data-d="${k}" class="${prefs.diff === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+    <p class="sub" style="font-size:12.5px;margin-top:6px">На лёгкой бот действует просто и получает меньше кредитов. На обычной и сложной он прогоняет пробные бои против твоей армии, а на сложной ещё и богаче.</p>`;
+}
+function bindDiff() {
+  const seg = $('diffSeg');
+  if (!seg) return;
+  for (const b of seg.children) b.onclick = () => { prefs.diff = b.dataset.d; savePrefs(); for (const x of seg.children) x.classList.toggle('on', x === b); };
+}
+function urlRoom() { const m = /[?&]room=([A-Za-z0-9]{5})(?:&|$)/.exec(location.search); return m ? m[1].toUpperCase() : ''; }
+function showMenu() {
+  if (mode === 'online' && on) {
+    openCard(`<h2>Плацдарм</h2><p class="sub">Онлайн-партия в комнате ${esc(on.code)}</p>
+      <div class="stack"><button class="btn primary" id="contBtn" type="button">Вернуться в игру</button>
+      <button class="btn" id="shareBtn2" type="button">${navigator.share ? 'Поделиться ссылкой' : 'Скопировать ссылку'}</button>
+      <button class="btn danger" id="quitBtn" type="button">Выйти из партии</button></div>`, '', 'menu');
+    $('contBtn').onclick = () => { closeCard(); syncOnline(); };
+    $('shareBtn2').onclick = () => shareRoom();
+    $('quitBtn').onclick = () => exitOnline();
+    return;
+  }
+  const resumable = !!state && !state.over, going = resumable && phase !== 'menu';
+  const saved = prefs.online && prefs.online.code, link = urlRoom();
+  const main = link ? 'join' : saved ? 'back' : resumable ? 'cont' : 'new';
+  const P = (k) => (main === k ? ' primary' : '');
+  openCard(`<h2>Плацдарм</h2><p class="sub">Автобатлер: расставь армию, бой идёт сам</p>
+    <ol>
+      <li>Покупай отряды и ставь их на свою половину поля.</li>
+      <li>Бой идёт сам. Выжившие враги бьют по твоей базе.</li>
+      <li>Армия остаётся на местах между раундами: докупай новые отряды и улучшай старые.</li>
+    </ol>
+    <div class="sect"><h3>Против бота</h3>${diffSeg()}
+      <div class="stack">
+        ${resumable ? `<button class="btn${P('cont')}" id="contBtn" type="button">${going ? 'Вернуться в игру' : 'Продолжить партию'}</button>` : ''}
+        <button class="btn${P('new')}" id="newBtn" type="button">${resumable ? 'Начать заново' : 'Начать'}</button>
+      </div></div>
+    <div class="sect"><h3>Онлайн с другом</h3>
+      <input class="inp" id="nameIn" maxlength="16" placeholder="Твоё имя" autocomplete="nickname" value="${esc(prefs.name || '')}">
+      <div class="stack" style="margin-top:8px">
+        ${saved ? `<button class="btn${P('back')}" id="backBtn" type="button">Вернуться в комнату ${esc(saved)}</button>` : ''}
+        <button class="btn" id="hostBtn" type="button">Создать комнату</button>
+        <div class="joinrow"><input class="inp" id="codeIn" maxlength="5" placeholder="Код комнаты" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(link)}"><button class="btn${P('join')}" id="joinBtn" type="button">Войти</button></div>
+      </div></div>`, '', 'menu');
+  bindDiff();
+  const cont = $('contBtn'), nb = $('newBtn'), nameIn = $('nameIn'), codeIn = $('codeIn');
+  if (cont) cont.onclick = () => { closeCard(); if (phase === 'menu') beginDeploy(); };
+  let armed = !resumable;
+  nb.onclick = () => {
+    if (!armed) { armed = true; nb.textContent = 'Точно? Текущая партия пропадёт'; nb.classList.add('danger'); return; }
+    newRun(prefs.diff);
+  };
+  nameIn.oninput = () => { prefs.name = nameIn.value.slice(0, 16); savePrefs(); };
+  if ($('backBtn')) $('backBtn').onclick = () => joinRoom(saved);
+  $('hostBtn').onclick = () => hostRoom();
+  $('joinBtn').onclick = () => joinRoom(codeIn.value);
+  codeIn.onkeydown = (e) => { if (e.key === 'Enter') joinRoom(codeIn.value); };
+}
+function showResult(res, round) {
+  const cls = res.win === MY ? 'win' : res.win === FOE ? 'lose' : '';
+  const title = res.win === MY ? 'Раунд за тобой' : res.win === FOE ? (mode === 'online' ? 'Раунд за соперником' : 'Раунд за ботом') : 'Ничья';
+  let lines2 = '';
+  if (res.dmg[FOE]) lines2 += `<div class="pos">База ${foeWord()}: <b>−${res.dmg[FOE]}</b></div>`;
+  if (res.dmg[MY]) lines2 += `<div class="neg">Твоя база: <b>−${res.dmg[MY]}</b></div>`;
+  if (!res.dmg[0] && !res.dmg[1]) lines2 += '<div class="muted">Обе армии полегли, базы целы</div>';
+  lines2 += `<div class="muted">На следующий раунд: +${income(round + 1)} кредитов</div>`;
+  openCard(`<h2>${title}</h2><p class="sub">Раунд ${round}${res.timeout ? ': время вышло, урон получили обе базы' : ''}</p>
+    <div class="res-lines">${lines2}</div>
+    <div class="stack"><button class="btn primary" id="nextBtn" type="button">Следующий раунд</button></div>`, cls, 'result');
+  $('nextBtn').onclick = () => { if (mode === 'online') nextOnline(); else { closeCard(); clearFx(); clearDecal(); beginDeploy(); } };
+}
+function showOver() {
+  const w = state.over.win, cls = w === MY ? 'win' : w === FOE ? 'lose' : '';
+  const title = w === MY ? 'Победа!' : w === FOE ? 'Поражение' : 'Ничья';
+  const sub = `Раундов сыграно: ${state.history.length}. Твоя база: ${state.hp[MY]}, база ${foeWord()}: ${state.hp[FOE]}.`;
+  if (mode === 'online') {
+    openCard(`<h2>${title}</h2><p class="sub">${sub}</p><div class="reline" id="reLine"></div>
+      <div class="stack"><button class="btn primary" id="reBtn" type="button">Реванш</button>
+      <button class="btn" id="menuBtn2" type="button">В меню</button></div>`, cls, 'over');
+    $('reBtn').onclick = () => voteRematch();
+    $('menuBtn2').onclick = () => exitOnline();
+    return;
+  }
+  openCard(`<h2>${title}</h2><p class="sub">${sub}</p>${diffSeg()}
+    <div class="stack"><button class="btn primary" id="againBtn" type="button">Новая партия</button></div>`, cls, 'over');
+  bindDiff();
+  $('againBtn').onclick = () => newRun(prefs.diff);
+}
+
+/* ---------- сохранение партии с ботом (только в этом браузере) ---------- */
+function save() {
+  if (mode !== 'bot' || !state || state.over) return;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* без сохранения */ }
+}
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* пусто */ } }
+function loadSave() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if (!s || s.v !== 1 || s.over || !Array.isArray(s.squads) || !Array.isArray(s.hp) || !Array.isArray(s.credits)) return null;
+    s.squads = s.squads.filter((q) => q && UT[q.t] && (q.side === 0 || q.side === 1) && q.col >= 0 && q.col < COLS && q.row >= 0 && q.row < ROWS && q.lvl >= 1 && q.lvl <= 3);
+    for (const q of s.squads) if (typeof q.paid !== 'number') q.paid = UT[q.t].cost;
+    return s;
+  } catch (e) { return null; }
+}
+
+/* ===================== ОНЛАЙН ===================== */
+// Комната в базе: rooms/КОД = { p: {s0, s1} игроки, on: {s0, s1} кто в сети, cur: номер партии,
+//   gN: { seed, rR: { c: {s0, s1} хеши ходов, v: {s0, s1} раскрытые ходы, h: {s0, s1} сверка итога } }, re: голоса за реванш }
+// Ход сначала фиксируется хешем, а раскрывается, только когда готовы оба: подсмотреть чужую расстановку нельзя.
+// Бой каждый считает у себя: при одинаковых ходах он совпадает до бита.
+const FB_VER = '10.12.2';
+const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const DEV = /[?&]dev(?:[&=]|$)/.test(location.search);   // ?dev — локальная имитация сервера для проверки в двух вкладках
+let net = null, on = null;
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = () => res(); s.onerror = () => rej(new Error('load'));
+    document.head.appendChild(s);
+  });
+}
+async function getNet() {
+  if (net) return net;
+  if (DEV) return (net = localNet());
+  const cfg = window.FIREBASE_CONFIG || {};
+  if (!cfg.apiKey || !cfg.databaseURL) throw new Error('nocfg');
+  if (!window.firebase || !window.firebase.database) {
+    await loadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app-compat.js`);
+    await loadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-database-compat.js`);
+  }
+  const fb = window.firebase, app = fb.apps.length ? fb.app() : fb.initializeApp(cfg);
+  return (net = fbNet(app.database()));
+}
+function fbNet(db) {
+  const ref = (code) => db.ref('rooms/' + code);
+  return {
+    watch(code, cb) { const r = ref(code), h = (s) => cb(s.val()); r.on('value', h, () => cb(undefined)); return () => r.off('value', h); },
+    update(code, patch) { return ref(code).update(patch); },
+    async get(code) { return (await ref(code).once('value')).val(); },
+    async txn(code, fn) { const r = await ref(code).transaction(fn); return { ok: r.committed, room: r.snapshot.val() }; },
+    presence(code, side) {
+      const conn = db.ref('.info/connected'), me = db.ref(`rooms/${code}/on/s${side}`);
+      const h = (s) => { if (s.val() === true) { me.onDisconnect().set(false); me.set(true); } };
+      conn.on('value', h);
+      return () => { conn.off('value', h); me.onDisconnect().cancel(); me.set(false); };
+    },
+  };
+}
+// то же самое без сервера, только для проверки (?dev): каждое поле комнаты — отдельная запись в общем
+// хранилище браузера, как пути в Firebase. Сигнал — событие storage: оно приходит, когда данные уже видны.
+function localNet() {
+  const P = 'plazdarm.dev.', subs = new Map(), timers = {};
+  const keysOf = (code) => {
+    const pre = P + code + '/', ks = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(pre)) ks.push(k); }
+    return ks;
+  };
+  const read = (code) => {
+    const pre = P + code + '/', ks = keysOf(code);
+    if (!ks.length) return null;
+    const room = {};
+    for (const k of ks) {
+      const path = k.slice(pre.length).split('/');
+      let o = room;
+      for (let i = 0; i < path.length - 1; i++) { if (!o[path[i]] || typeof o[path[i]] !== 'object') o[path[i]] = {}; o = o[path[i]]; }
+      try { o[path[path.length - 1]] = JSON.parse(localStorage.getItem(k)); } catch (e) { /* пусто */ }
+    }
+    return room;
+  };
+  const fire = (code, delay) => {
+    clearTimeout(timers[code]);
+    timers[code] = setTimeout(() => { const room = read(code); for (const cb of subs.get(code) || []) cb(room ? clone(room) : null); }, delay);
+  };
+  addEventListener('storage', (e) => {
+    if (!e.key || !e.key.startsWith(P)) return;
+    const code = e.key.slice(P.length).split('/')[0];
+    if (subs.has(code)) fire(code, 60);    // пачку изменений из другой вкладки собираю целиком
+  });
+  const setPath = (code, path, v) => {
+    const base = P + code + '/' + path, parts = path.split('/');
+    for (let i = 1; i < parts.length; i++) localStorage.removeItem(P + code + '/' + parts.slice(0, i).join('/'));
+    for (const k of keysOf(code)) if (k === base || k.startsWith(base + '/')) localStorage.removeItem(k);
+    if (v === null || v === undefined) return;
+    if (typeof v !== 'object') { localStorage.setItem(base, JSON.stringify(v)); return; }
+    const walk = (o, p) => { for (const k in o) { const x = o[k]; if (x !== null && typeof x === 'object') walk(x, p + '/' + k); else if (x !== undefined && x !== null) localStorage.setItem(p + '/' + k, JSON.stringify(x)); } };
+    walk(v, base);
+  };
+  const api = {
+    watch(code, cb) { if (!subs.has(code)) subs.set(code, new Set()); subs.get(code).add(cb); fire(code, 10); return () => subs.get(code).delete(cb); },
+    async update(code, patch) { for (const k in patch) setPath(code, k, patch[k]); fire(code, 10); },
+    async get(code) { return read(code); },
+    async txn(code, fn) {
+      const cur = read(code), nv = fn(cur ? clone(cur) : null);
+      if (nv === undefined) return { ok: false, room: cur };
+      // пишу только изменившиеся верхние поля, чтобы другая вкладка не увидела комнату пустой
+      const old = cur || {}, next = nv || {};
+      for (const k of new Set([...Object.keys(old), ...Object.keys(next)])) if (JSON.stringify(old[k]) !== JSON.stringify(next[k])) setPath(code, k, next[k] === undefined ? null : next[k]);
+      fire(code, 10);
+      return { ok: true, room: nv };
+    },
+    presence(code, side) {
+      const k = `on/s${side}`, off = () => { api.update(code, { [k]: false }); };
+      api.update(code, { [k]: true });
+      addEventListener('pagehide', off);
+      return () => { removeEventListener('pagehide', off); off(); };
+    },
+  };
+  return api;
+}
+
+const myName = () => (prefs.name || '').trim().slice(0, 16) || 'Игрок';
+function codeGen() { let s = ''; for (let i = 0; i < 5; i++) s += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]; return s; }
+function urlWith(code) { const u = new URL(location.href); if (code) u.searchParams.set('room', code); else u.searchParams.delete('room'); return u; }
+function setRoomParam(code) { try { const u = urlWith(code); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) { /* пусто */ } }
+function shareLink(code) { const u = urlWith(code); u.searchParams.delete('pid'); return u.href; }
+function onlineError(e) {
+  const m = (e && (e.code || e.message)) || '';
+  toast(m === 'nocfg' ? 'Онлайн ещё не настроен: в файл нужно вставить конфиг Firebase.'
+    : m === 'load' ? 'Не удалось подключиться к серверу. Онлайн работает на сайте игры, когда есть интернет.'
+    : /permission|denied|perm/i.test(m) ? 'Сервер отклонил запрос: проверь правила базы в Firebase.'
+    : 'Ошибка связи с сервером. Попробуй ещё раз.', 4500);
+}
+
+async function hostRoom() {
+  let n;
+  try { n = await getNet(); } catch (e) { onlineError(e); return; }
+  for (let i = 0; i < 6; i++) {
+    const code = codeGen(), room = { v: 1, t: Date.now(), p: { s0: { id: PID, nm: myName() } }, cur: 1, g1: { seed: (Math.random() * 4294967296) >>> 0 } };
+    try {
+      const r = await n.txn(code, (cur) => (cur ? undefined : room));
+      if (r.ok) { enterRoom(code, 0); return; }
+    } catch (e) { onlineError(e); return; }
+  }
+  toast('Не удалось создать комнату, попробуй ещё раз');
+}
+async function joinRoom(raw) {
+  const code = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 5) { toast('Код комнаты: 5 букв и цифр'); return; }
+  let n;
+  try { n = await getNet(); } catch (e) { onlineError(e); return; }
+  try {
+    await n.get(code);   // прогреваю кеш: транзакция Firebase иначе может начаться с пустого значения
+    let side = -1;
+    const r = await n.txn(code, (cur) => {
+      if (!cur) { side = -1; return cur; }
+      const p = cur.p || {};
+      if (p.s0 && p.s0.id === PID) { side = 0; return cur; }
+      if (p.s1 && p.s1.id === PID) { side = 1; return cur; }
+      if (p.s1) { side = -2; return undefined; }
+      cur.p = Object.assign({}, p, { s1: { id: PID, nm: myName() } });
+      side = 1;
+      return cur;
+    });
+    if (side === -2) { toast('В этой комнате уже двое'); return; }
+    if (!r.room || side < 0) { toast('Комнаты с таким кодом нет'); return; }
+    enterRoom(code, side);
+  } catch (e) { onlineError(e); }
+}
+function enterRoom(code, side) {
+  stopBot();
+  if (on) leaveRoom(true);
+  mode = 'online'; MY = side; FOE = 1 - side; FLIP = side === 1;
+  state = null; battle = null; selType = -1; selSq = null; drag = null;
+  clearFx(); clearDecal();
+  on = { code, room: null, cache: new Map(), game: 0, shown: -1, uiRound: 0, lvl0: {}, revealed: {}, first: true, warned: false, pending: null, oppName: '' };
+  prefs.online = { code }; savePrefs();
+  setRoomParam(code);
+  phase = 'lobby';
+  showLobby();
+  on.unwatch = net.watch(code, (room) => { if (on && on.code === code) onRoom(room); });
+  on.presOff = net.presence(code, side);
+  showPanel(); renderCards();
+}
+function leaveRoom(keepPref) {
+  if (!on) return;
+  try { if (on.unwatch) on.unwatch(); } catch (e) { /* пусто */ }
+  try { if (on.presOff) on.presOff(); } catch (e) { /* пусто */ }
+  on = null;
+  if (!keepPref) { prefs.online = null; savePrefs(); setRoomParam(null); }
+}
+function exitOnline() {
+  leaveRoom(false);
+  mode = 'bot'; MY = 0; FOE = 1; FLIP = false;
+  battle = null; selType = -1; selSq = null; drag = null;
+  clearFx(); clearDecal();
+  state = loadSave();
+  phase = 'menu';
+  updateHud(); showPanel(); renderCards(); renderInfo();
+  showMenu();
+}
+function onRoom(room) {
+  if (room === undefined) { onlineError({ code: 'permission' }); return; }
+  if (!room) { toast('Комната закрыта', 3000); exitOnline(); return; }
+  on.room = room;
+  syncOnline();
+}
+// состояние партии целиком выводится из журнала ходов в комнате; посчитанные раунды кешируются
+function derive() {
+  const room = on.room, n = room.cur || 1, G = room['g' + n];
+  if (!G || typeof G.seed !== 'number') return null;
+  if (on.game !== n) { on.game = n; on.cache = new Map(); on.shown = -1; on.uiRound = 0; on.revealed = {}; on.first = true; on.rematchFor = 0; }
+  let base = onlineGame(G.seed), R = 1, last = 0, bad = -1;
+  for (; R <= MAX_ROUNDS; R++) {
+    const rd = G['r' + R], v = rd && rd.v;
+    if (!v || !v.s0 || !v.s1) break;
+    let res = on.cache.get(R);
+    if (!res) {
+      const c = rd.c || {}, o = [null, null];
+      for (const s of [0, 1]) {
+        const x = v['s' + s];
+        if (x && typeof x.o === 'string' && typeof x.salt === 'string' && cyrb53(x.o + x.salt) === c['s' + s]) {
+          try { o[s] = JSON.parse(x.o); } catch (e) { o[s] = null; }
+        }
+      }
+      if (!o[0] || !o[1]) { bad = !o[0] ? 0 : 1; break; }
+      res = resolveRound(base, o[0], o[1]);
+      if (res.bad !== undefined) { bad = res.bad; break; }
+      on.cache.set(R, res);
+    }
+    base = res.post; last = R;
+    if (base.over) break;
+  }
+  return { n, G, R: base.over ? last : R, base, last, bad, over: !!base.over };
+}
+function syncOnline() {
+  if (!on || !on.room || phase === 'error') return;
+  const room = on.room, p = room.p || {}, d = derive();
+  if (!d) return;
+  const opp = p['s' + FOE];
+  on.oppName = opp ? String(opp.nm || 'Соперник').slice(0, 16) : '';
+  if (d.bad >= 0) {
+    showError(d.bad === MY ? 'Твой ход не прошёл проверку.' : 'Ход соперника не прошёл проверку. Возможно, у вас разные версии игры: обновите страницу оба.');
+    return;
+  }
+  // сверка итогов боёв между игроками
+  for (let r = 1; r <= d.last; r++) {
+    const res = on.cache.get(r), h = (d.G['r' + r] && d.G['r' + r].h) || {};
+    if (!h['s' + MY]) net.update(on.code, { [`g${d.n}/r${r}/h/s${MY}`]: res.check }).catch(() => {});
+    else if (h['s' + FOE] && h['s' + FOE] !== res.check && !on.warned) { on.warned = true; toast('Итоги боя у вас разошлись. Если повторится, напиши мне.', 6000); }
+  }
+  if (on.first) { on.first = false; on.shown = d.last; }      // при входе в комнату прошлые бои не показываю
+  const rd = d.G['r' + d.R] || {}, c = rd.c || {}, v = rd.v || {};
+  const myCommit = !!c['s' + MY], oppCommit = !!c['s' + FOE];
+  if (!d.over && c.s0 && c.s1 && !v['s' + MY]) reveal(d.n, d.R);   // оба готовы: раскрываю свой ход
+  setOppLine(!!(room.on && room.on['s' + FOE]), oppCommit, !!opp);
+  $('foeName').textContent = on.oppName || 'Соперник';
+  if (phase === 'battle' || phase === 'result') return;          // игрок досматривает бой или итоги раунда
+  if (d.last > on.shown) { playOnlineRound(on.shown + 1); return; }
+  if (d.over) { onlineOver(d); return; }
+  if (!opp) {
+    phase = 'lobby';
+    if (ocard.dataset.kind !== 'menu' && ocard.dataset.kind !== 'lobby') showLobby();
+    showPanel();
+    return;
+  }
+  if (ocard.dataset.kind === 'lobby' || ocard.dataset.kind === 'over') closeCard();
+  if (on.uiRound !== d.R) {           // новый раунд: рабочая копия общего состояния плюс мой черновик
+    on.uiRound = d.R;
+    state = clone(d.base);
+    on.lvl0 = {};
+    for (const q of state.squads) if (q.side === MY) on.lvl0[q.id] = q.lvl;
+    if (myCommit) { const sc = loadCommit(d.n, d.R); if (sc) { try { applyOrders(state, MY, JSON.parse(sc.o)); } catch (e) { /* пусто */ } } }
+    else restoreDraft(d.n, d.R);
+    selType = -1; selSq = null; drag = null;
+    battle = null; clearFx(); clearDecal();
+  }
+  phase = myCommit ? 'wait' : 'deploy';
+  updateHud(); showPanel(); renderCards(); renderInfo();
+}
+function setOppLine(online, ready, present) {
+  const el = $('oppLine');
+  const nm = `<b>${esc(on.oppName || 'Соперник')}</b>`;
+  el.innerHTML = !present ? 'Ждём второго игрока' : !online ? `${nm} не в сети` : ready ? `${nm} готов к бою` : `${nm} расставляет армию`;
+  el.classList.toggle('ready', present && online && ready);
+}
+function collectOrders() {
+  const n = [], u = [];
+  for (const q of state.squads) {
+    if (q.side !== MY) continue;
+    if (on.lvl0[q.id] === undefined) n.push([q.t, q.col, q.row, q.lvl]);
+    else if (q.lvl > on.lvl0[q.id]) u.push([q.id, q.lvl]);
+  }
+  return { n, u };
+}
+function readyOnline() {
+  if (mode !== 'online' || !on || phase !== 'deploy' || !overlay.hidden) return;
+  if (!state.squads.some((s) => s.side === MY)) { toast('Сначала поставь хотя бы один отряд'); return; }
+  const o = JSON.stringify(collectOrders()), salt = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  const n = on.game, R = on.uiRound;
+  saveCommit(n, R, { o, salt });
+  selType = -1; selSq = null;
+  phase = 'wait';
+  showPanel(); renderCards(); renderInfo();
+  net.update(on.code, { [`g${n}/r${R}/c/s${MY}`]: cyrb53(o + salt) }).catch((e) => { phase = 'deploy'; showPanel(); renderInfo(); onlineError(e); });
+}
+function reveal(n, R) {
+  const key = n + ':' + R;
+  if (on.revealed[key]) return;
+  const d = loadCommit(n, R);
+  if (!d) return;
+  on.revealed[key] = true;
+  net.update(on.code, { [`g${n}/r${R}/v/s${MY}`]: d }).catch((e) => { on.revealed[key] = false; onlineError(e); });
+}
+// ход и черновик расстановки переживают перезагрузку страницы
+const mem = {};
+const skey = (k, n, R) => `plazdarm.${k}.${on.code}.${MY}.${n}.${R}`;
+function putStore(key, val) { mem[key] = val; try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* пусто */ } }
+function getStore(key) { if (mem[key]) return mem[key]; try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } }
+function saveCommit(n, R, d) { putStore(skey('c', n, R), d); }
+function loadCommit(n, R) { return getStore(skey('c', n, R)); }
+function saveDraft() { if (on && phase === 'deploy') putStore(skey('d', on.game, on.uiRound), collectOrders()); }
+function restoreDraft(n, R) { const o = getStore(skey('d', n, R)); if (o) applyOrders(state, MY, o); }
+function playOnlineRound(r) {
+  const res = on.cache.get(r);
+  if (!res) return;
+  on.shown = r; on.pending = res;
+  state = clone(res.pre);
+  if (ocard.dataset.kind === 'lobby') closeCard();
+  launchBattle(state);
+}
+function endOnlineBattle() {
+  const res = on.pending.res, round = state.round, shown = { round, credits: state.credits[MY] };
+  state = clone(on.pending.post);
+  updateHud(state.over ? null : shown);
+  if (state.over) { phase = 'over'; showPanel(); showOver(); syncOnline(); }
+  else { phase = 'result'; showPanel(); showResult(res, round); }
+}
+function nextOnline() {
+  closeCard();
+  phase = 'sync';
+  battle = null; clearFx(); clearDecal();
+  syncOnline();
+}
+function onlineOver(d) {
+  if (phase !== 'over') {
+    state = clone(d.base);
+    if (battle && !battle.over) battle = null;
+    phase = 'over';
+    updateHud(); showPanel(); showOver();
+  }
+  const re = on.room.re || {}, line = $('reLine');
+  if (line) line.textContent = re['s' + FOE] ? (re['s' + MY] ? 'Начинаем заново…' : 'Соперник хочет реванш') : re['s' + MY] ? 'Ждём ответа соперника' : '';
+  if (re.s0 && re.s1 && MY === 0 && on.rematchFor !== d.n) {
+    on.rematchFor = d.n;
+    net.update(on.code, { cur: d.n + 1, ['g' + (d.n + 1)]: { seed: (Math.random() * 4294967296) >>> 0 }, re: null }).catch(onlineError);
+  }
+}
+function voteRematch() {
+  if (!on) return;
+  net.update(on.code, { [`re/s${MY}`]: true }).catch(onlineError);
+  const l = $('reLine');
+  if (l && !l.textContent) l.textContent = 'Ждём ответа соперника';
+}
+function showLobby() {
+  if (!on) return;
+  openCard(`<h2>Комната</h2><div class="bigcode">${esc(on.code)}</div>
+    <p class="sub" style="text-align:center">Отправь другу ссылку или код. Партия начнётся, как только он войдёт.</p>
+    <div class="stack"><button class="btn primary" id="shareBtn" type="button">${navigator.share ? 'Поделиться ссылкой' : 'Скопировать ссылку'}</button>
+    <button class="btn" id="leaveBtn" type="button">Выйти из комнаты</button></div>`, '', 'lobby');
+  $('shareBtn').onclick = () => shareRoom();
+  $('leaveBtn').onclick = () => exitOnline();
+}
+async function shareRoom() {
+  if (!on) return;
+  const link = shareLink(on.code);
+  try {
+    if (navigator.share) { await navigator.share({ title: 'Плацдарм', text: `Заходи в мою комнату в «Плацдарме», код ${on.code}`, url: link }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(link); toast('Ссылка скопирована'); } catch (e) { window.prompt('Скопируй ссылку', link); }
+}
+function showError(text) {
+  phase = 'error';
+  openCard(`<h2>Партия остановлена</h2><p class="sub">${esc(text)}</p>
+    <div class="stack"><button class="btn primary" id="errBtn" type="button">В меню</button></div>`, 'lose', 'error');
+  $('errBtn').onclick = () => { phase = 'menu'; exitOnline(); };
+  showPanel();
+}
+
+/* ---------- кнопки и клавиши ---------- */
+fightBtn.addEventListener('click', () => { if (mode === 'online') readyOnline(); else startBattle(); });
+$('skipBtn').addEventListener('click', skipBattle);
+$('menuBtn').addEventListener('click', () => {
+  if (overlay.hidden || ocard.dataset.kind === 'lobby') showMenu();
+  else if (ocard.dataset.kind === 'menu' && phase !== 'menu') { closeCard(); if (mode === 'online') syncOnline(); }
+});
+for (const b of $('speedSeg').children) b.addEventListener('click', () => { speed = +b.dataset.speed; prefs.speed = speed; savePrefs(); showPanel(); });
+window.addEventListener('keydown', (e) => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const tag = e.target && e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if ((e.key === 'Enter' || e.key === ' ') && tag === 'BUTTON') return;   // кнопка сама обработает
+  if (!overlay.hidden) {
+    if (e.key === 'Escape' && ocard.dataset.kind === 'menu' && phase !== 'menu') { closeCard(); if (mode === 'online') syncOnline(); }
+    return;
+  }
+  if (phase === 'deploy') {
+    if (e.key >= '1' && e.key <= String(UT.length)) selectType(+e.key - 1);
+    else if (e.key === 'Escape') { selType = -1; selSq = null; renderCards(); renderInfo(); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (mode === 'online') readyOnline(); else startBattle(); }
+    else if ((e.key === 'u' || e.key === 'г') && selSq) upgradeSquad(selSq);
+    else if ((e.key === 'Delete' || e.key === 'Backspace') && selSq) removeSquad(selSq);
+  } else if (phase === 'battle') {
+    if (e.key === 's' || e.key === 'ы') skipBattle();
+    else if (e.key === '1' || e.key === '2' || e.key === '4') { speed = +e.key; prefs.speed = speed; savePrefs(); showPanel(); }
+  }
+});
+
+/* ---------- старт ---------- */
+if (window.ResizeObserver) new ResizeObserver(() => layout()).observe(stage);
+window.addEventListener('resize', layout);
+window.addEventListener('pagehide', save);
+state = loadSave();
+layout();
+renderCards();
+updateHud();
+showPanel();
+showMenu();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
