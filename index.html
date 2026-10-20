@@ -87,6 +87,11 @@ button{font:inherit;color:inherit}
 }
 .camBtn svg{width:1.05rem;height:1.05rem}
 .undoBtn{bottom:3.6rem}
+.votes{display:grid;gap:.45rem;margin-top:.55rem;max-width:16rem}
+.votes .btn{min-height:2.6rem}
+.votes .btn.voted{color:var(--ok);box-shadow:inset 0 0 0 1.5px var(--ok)}
+@media (min-width:900px){.votes{margin-top:0;grid-column:3;grid-row:1/3}}
+.pauseTag{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:2;font-family:var(--display);font-weight:700;font-size:2.4rem;letter-spacing:.2em;color:var(--accent);text-shadow:0 0 18px rgba(0,0,0,.8);pointer-events:none}
 .rotHint{position:absolute;left:.7rem;bottom:.7rem;z-index:2;display:flex;align-items:center;gap:.4rem;padding:.35rem .7rem;background:rgba(20,24,31,.88);box-shadow:inset 0 0 0 1px var(--line-2);font-size:.85rem;color:var(--text);pointer-events:none}
 .rotHint kbd{font-family:var(--display);font-weight:700;font-size:.85rem;color:var(--accent-ink);background:var(--accent);padding:.05rem .4rem}
 .panel{background:linear-gradient(180deg,#12151b,#0d1015);border-top:1px solid var(--line);padding:.5rem .7rem .65rem;display:flex;flex-direction:column;gap:.5rem;height:17rem;flex:none}
@@ -269,6 +274,7 @@ body.online .panel{height:18.4rem}
       <div class="hp foe" title="База соперника"><span class="who" id="foeName">Бот</span><div class="bar"><i id="hpFoeBar"></i></div><b id="hpFoe">600</b></div>
     </div>
     <div class="money" title="Кредиты"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7z" fill="currentColor" opacity=".22"/><path d="M12 2 21 7v10l-9 5-9-5V7z" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 7.5v9M8 10l8 4.5M16 10l-8 4.5" stroke="currentColor" stroke-width="1.8"/></svg><b id="credits">300</b></div>
+    <button class="iconbtn" id="pauseBtn" type="button" aria-label="Пауза" title="Пауза (P)" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg></button>
     <button class="iconbtn" id="menuBtn" type="button" aria-label="Меню">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
@@ -279,6 +285,7 @@ body.online .panel{height:18.4rem}
       <button class="camBtn undoBtn" id="undoBtn" type="button" hidden title="Отменить последнее действие (Ctrl+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12h-2" transform="translate(0 -6)"/></svg>Отменить</button>
       <button class="camBtn" id="camBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span id="camLbl">Вписать поле</span></button>
       <div class="toast" id="toast" role="status" hidden></div>
+      <div class="pauseTag" id="pauseTag" hidden>ПАУЗА</div>
       <div class="rotHint" id="rotHint" hidden><kbd>R</kbd> — повернуть отряд</div>
       <div class="overlay" id="overlay" hidden><div class="ocard" id="ocard"></div></div>
     </section>
@@ -297,6 +304,7 @@ body.online .panel{height:18.4rem}
           </div>
           <button class="btn" id="skipBtn" type="button">Пропустить</button>
         </div>
+        <div class="votes" id="votes" hidden><button class="btn" id="voteSpeed" type="button" hidden>Ускорить ×2</button><button class="btn" id="voteSkip" type="button" hidden>Пропустить</button></div>
         <div class="armies"><div class="army me" id="armyMe"></div><div class="army foe" id="armyFoe"></div></div>
       </div>
     </aside>
@@ -328,7 +336,7 @@ const isDrop = (col) => col < DROP || col >= COLS - DROP, isMain = (col) => col 
 // площадка стороны 0 — напротив зоны врага (сверху), стороны 1 — напротив моей (снизу); между площадками те же 212, что между зонами
 const D0 = 0, D1 = FH;
 const DT = 1 / 30, BATTLE_TIME = 100;
-const GAME_VER = 25;                     // версия правил: в онлайне у обоих игроков должна совпадать
+const GAME_VER = 35;                     // версия правил: в онлайне у обоих игроков должна совпадать
 const ARMOR = 1;                        // брони нет, как в Mechabellum: контры решают здоровье, урон за выстрел и площадь
 const LVL_MUL = [1, 2, 3];              // уровень умножает здоровье и урон, как в Mechabellum
 const LOSS_MUL = [1, 2, 3];             // выживший юнит высокого уровня бьёт по базе сильнее
@@ -354,11 +362,15 @@ const UT = [
   { k: 'goliath', name: 'Саблезуб', cost: 200, cnt: 1, hp: 14142, dmg: 6537, cd: 3.2, rng: 95, spd: 8, turn: 1.8, r: 32, fp: [2, 2],
     air: false, gnd: true, aa: false, heavy: true, front: true, loss: 20, atk: 'cannon', splash: 10, gap: 0.5,
     tags: ['анти-танк', 'сплэш'], desc: 'Тяжёлый гусеничный танк со спаренными пушками в бронированной башне.' },
+  // Мустанг ≈ Mustang из Mechabellum: лёгкая ховер-машина с пулемётной турелью на крыше
+  { k: 'mustang', name: 'Мустанги', cost: 200, cnt: 12, hp: 343, dmg: 36, cd: 0.4, rng: 95, spd: 16, turn: 6, r: 5.8, fp: [2, 1],
+    air: false, gnd: true, aa: true, heavy: false, loss: 1.5, atk: 'gun', tags: ['пво'], desc: 'Отряд лёгких ховер-машин с поворотной спаренной пулемётной турелью на крыше.' },
 ];
 const KI = {};
 let RMAX = 0;
 UT.forEach((T, i) => {
   KI[T.k] = i; T.i = i; RMAX = Math.max(RMAX, T.r);
+  T.big = (T.fp ? T.fp[0] * T.fp[1] : 1) >= 4;   // крупные (от 2×2) другие юниты не сдвигают
   const a = T.turn * DT, a2 = a * a;
   T.tc = 1 - a2 / 2 + (a2 * a2) / 24 - (a2 * a2 * a2) / 720;
   T.ts = a - (a * a2) / 6 + (a * a2 * a2) / 120;
@@ -387,9 +399,12 @@ function turnToward(u, dx, dy) {
 function squadFacing(sq, squads, round) {
   const c = squadCenter(sq);
   let bx = 0, by = sq.side === 0 ? -1 : 1, bd = Infinity;
+  const T = UT[sq.t];
   for (const e of squads) {
     if (e.side === sq.side || (round !== undefined && e.rp >= round)) continue;
-    const ec = squadCenter(e), dx = ec.x - c.x, dy = ec.y - c.y, d = dx * dx + dy * dy;
+    const E = UT[e.t];
+    if (!(E.air ? T.aa : T.gnd)) continue;   // как в бою и как пунктир: только атакуемые
+    const ec = squadCenter(e), dx = ec.x - c.x, dy = ec.y - c.y, d = Math.sqrt(dx * dx + dy * dy) - T.r - E.r;
     if (d < bd) { bd = d; bx = dx; by = dy; }
   }
   const n = Math.sqrt(bx * bx + by * by) || 1;
@@ -403,11 +418,32 @@ function squadFacing(sq, squads, round) {
 const TECHS = {
   dbl: { unit: 'goliath', name: 'Двойной выстрел', cost: 150, desc: 'Выстреливает залп из 2 снарядов при каждой атаке, но время перезарядки повышается на 12%.' },
 };
+// «Увеличение дальности» (Range Enhancement из Mechabellum): у каждого юнита дальнего боя, 300, +40 к дальности
+for (const T of UT) if (T.atk !== 'melee') TECHS['rng_' + T.k] = { unit: T.k, name: 'Увеличение дальности', cost: 300, rng: 40, desc: 'Увеличивает дальность атаки на 40.' };
+TECHS.rng_rail.cost = 400;   // у Снайпера дальность дороже
+// «Механическая ярость» — как в Mechabellum
+TECHS.rage_hound = { unit: 'hound', name: 'Механическая ярость', cost: 250, spd: 5, cdD: 0.5, desc: 'Увеличивает скорость движения на 5 и уменьшает интервал атаки на 0,5 с.' };
+TECHS.rage_swarm = { unit: 'swarm', name: 'Механическая ярость', cost: 100, spd: 5, cdD: 0.4, desc: 'Увеличивает скорость движения на 5 и уменьшает интервал атаки на 0,4 с.' };
+// сумма поля f (rng, spd, cdD) по купленным прокачкам стороны для типа юнита
+function techBonus(techs, side, k, f) {
+  const tk = (techs && techs[side]) || {};
+  let b = 0;
+  for (const id in tk) if (tk[id] && TECHS[id] && TECHS[id].unit === k && TECHS[id][f]) b += TECHS[id][f];
+  return b;
+}
+// прибавка к дальности от купленных прокачек стороны для типа юнита
+function rangeBonus(techs, side, k) {
+  const tk = (techs && techs[side]) || {};
+  let b = 0;
+  for (const id in tk) if (tk[id] && TECHS[id] && TECHS[id].unit === k && TECHS[id].rng) b += TECHS[id].rng;
+  return b;
+}
 const BEATS = {
   swarm: ['hound', 'rail', 'goliath'],
   hound: ['rail', 'goliath'],
   rail: ['goliath'],
   goliath: ['hound'],
+  mustang: ['swarm', 'hound'],
 };
 const ADV = UT.map((A) => UT.map((B) => (BEATS[A.k].includes(B.k) ? 1 : BEATS[B.k].includes(A.k) ? -1 : 0)));
 UT.forEach((T, i) => {
@@ -475,7 +511,7 @@ function createBattle(squads, seed, quiet, round, techs) {
     for (const [x, y] of squadPositions(sq)) {
       b.units.push({
         id: id++, side: sq.side, t: sq.t, T, lvl: sq.lvl, mul: m, sq: sq.id,
-        x, y, px: x, py: y, vx: 0, vy: 0, fx: f.x, fy: f.y, drop: isDrop(sq.col) && sq.rp === round ? 1 : 0, lock: false, burst: 0, bt: 0, barrel: 0, dep: 0, burstN: dbl ? 2 : 1, cdMul: dbl ? 1.12 : 1,
+        x, y, px: x, py: y, vx: 0, vy: 0, fx: f.x, fy: f.y, drop: isDrop(sq.col) && sq.rp === round ? 1 : 0, rngB: rangeBonus(techs, sq.side, T.k), spdB: techBonus(techs, sq.side, T.k, 'spd'), cdB: techBonus(techs, sq.side, T.k, 'cdD'), lock: false, burst: 0, bt: 0, barrel: 0, dep: 0, burstN: dbl ? 2 : 1, cdMul: dbl ? 1.12 : 1,
         hp: T.hp * m, mhp: T.hp * m, r: T.r, air: T.air, alive: true,
         cd: (T.cd || 1) * (0.15 + 0.85 * rng()), tgt: null, rt: 0.02 * (id % 9), bT: 0, bTgt: null, beam: null, pend: 0,
       });
@@ -507,7 +543,7 @@ function edge(u, v) { const dx = v.x - u.x, dy = v.y - u.y; return Math.sqrt(dx 
 function canHit(u, v) { return v.air ? u.T.aa : u.T.gnd; }
 function inRange(u, t) {
   const e = edge(u, t);
-  return e <= u.T.rng && !(u.T.minRng && e < u.T.minRng);
+  return e <= u.T.rng + (u.rngB || 0) && !(u.T.minRng && e < u.T.minRng);
 }
 // цель — враг, атаку по которому можно начать раньше всех: время разворота плюс время подхода (как в Mechabellum)
 function pickTarget(b, u) {
@@ -652,14 +688,14 @@ function step(b) {
     let dx, dy, go;
     if (t) {
       dx = t.x - u.x; dy = t.y - u.y;
-      go = Math.sqrt(dx * dx + dy * dy) - u.r - t.r > T.rng * 0.92;
+      go = !inRange(u, t);   // цель в радиусе — стоит на месте, ближе не подходит
     } else {   // бить некого: идёт вперёд до вражеской зоны
       dx = 0; dy = u.side === 0 ? -1 : 1;
       go = u.side === 0 ? u.y > ZONE : u.y < FH - ZONE;
     }
-    const cs = turnToward(u, dx, dy), sp = go ? Math.max(0, cs) * T.spd : 0;
-    u.vx += (u.fx * sp - u.vx) * 0.35;
-    u.vy += (u.fy * sp - u.vy) * 0.35;
+    const cs = turnToward(u, dx, dy), sp = go ? Math.max(0, cs) * (T.spd + u.spdB) : 0;
+    if (!go) { u.vx = 0; u.vy = 0; }   // остановка сразу, без проката по инерции
+    else { u.vx += (u.fx * sp - u.vx) * 0.35; u.vy += (u.fy * sp - u.vy) * 0.35; }
   }
   // 2. движение
   for (const u of U) if (u.alive) { u.x += u.vx * DT; u.y += u.vy * DT; }
@@ -673,9 +709,41 @@ function step(b) {
       if (d2 >= md * md) return;
       let d = Math.sqrt(d2), nx, ny;
       if (d < 1e-6) { nx = (u.id + v.id) % 2 ? 1 : -1; ny = 0; d = 0; } else { nx = dx / d; ny = dy / d; }
-      const o = md - d, mu = u.r * u.r, mv = v.r * v.r, s = mu + mv;
-      u.x -= nx * o * (mv / s); u.y -= ny * o * (mv / s);
-      v.x += nx * o * (mu / s); v.y += ny * o * (mu / s);
+      // ранг массы: крупные (от 2×2) > одиночные (1 юнит в отряде) > мелкие; младший полностью уступает старшему
+      const ru = u.T.big ? 2 : u.T.cnt === 1 ? 1 : 0, rv = v.T.big ? 2 : v.T.cnt === 1 ? 1 : 0;
+      const mu = u.T.atk === 'melee', mw = v.T.atk === 'melee', squeeze = !ru && !rv && mu !== mw;   // Ползун и прочая мелочь
+      const o = (md - d) * (ru || rv || squeeze ? 1 : 0.4);   // мелкие между собой толкаются мягко
+      let wu, wv;
+      if (ru !== rv) {
+        wu = ru < rv ? 1 : 0; wv = 1 - wu;
+        // мелкий упёрся в старшего — соскальзывает вдоль его края в сторону своего движения (обтекание, как вода)
+        const L = wu ? u : v, sg = wu ? -1 : 1, ox = nx * sg, oy = ny * sg;
+        if (L.T.cnt > 1 && L.fx * -ox + L.fy * -oy > 0) {
+          const tx = -oy, ty = ox, sd = tx * L.fx + ty * L.fy >= 0 ? 1 : -1, sl = L.T.spd * DT * 0.9;
+          L.x += tx * sd * sl; L.y += ty * sd * sl;
+        }
+      } else if (squeeze) {
+        // Ползун протискивается сквозь прочую мелочь: раздвигает её и соскальзывает вдоль соседа в сторону движения
+        // соседа отодвигаю только вбок от движения Ползуна (не вперёд, на фронт), сам Ползун уступает немного
+        const C = mu ? u : v, O = mu ? v : u, ex = mu ? nx : -nx, ey = mu ? ny : -ny, hd = ex * C.fx + ey * C.fy;
+        // строго поперёк поля (вдоль линии фронта), чтобы не выталкивать вперёд
+        let px = ex, py = 0, pl = Math.abs(px);
+        if (pl < 1e-3) { px = (C.id + O.id) % 2 ? 1 : -1; pl = 1; }
+        O.x += (px / pl) * o * 0.85; O.y += (py / pl) * o * 0.85;
+        C.x -= ex * o * 0.15; C.y -= ey * o * 0.15;
+        wu = 0; wv = 0;
+        const sg = mu ? -1 : 1, ox = nx * sg, oy = ny * sg;
+        if (C.fx * -ox + C.fy * -oy > 0) {
+          const tx = -oy, ty = ox, sd = tx * C.fx + ty * C.fy >= 0 ? 1 : -1, sl = C.T.spd * DT * 0.9;
+          C.x += tx * sd * sl; C.y += ty * sd * sl;
+        }
+      } else {
+        // стреляющий почти не сдвигается; Ползуны (ближний бой) распихивают и стреляющих — но только мелких
+        const pu = ru === 2 ? 1 : u.lock && v.T.atk !== 'melee' ? 0.12 : 1, pv = rv === 2 ? 1 : v.lock && u.T.atk !== 'melee' ? 0.12 : 1;
+        wu = pu / (pu + pv); wv = pv / (pu + pv);
+      }
+      u.x -= nx * o * wu; u.y -= ny * o * wu;
+      v.x += nx * o * wv; v.y += ny * o * wv;
     });
   }
   for (const u of U) if (u.alive) {
@@ -695,17 +763,17 @@ function step(b) {
     if (u.burst > 0) {
       u.bt -= DT;
       if (u.bt > 0) continue;
-      if (!ok) { u.burst = 0; u.cd = T.cd * u.cdMul; continue; }
+      if (!ok) { u.burst = 0; u.cd = Math.max(0.1, T.cd - u.cdB) * u.cdMul; continue; }
       u.burst--; u.bt = T.gap; u.barrel = (u.barrel + 1) % 2; u.lock = true;
       attack(b, u, t);
-      if (u.burst === 0) u.cd = T.cd * u.cdMul;
+      if (u.burst === 0) u.cd = Math.max(0.1, T.cd - u.cdB) * u.cdMul;
       continue;
     }
     if (!ok || u.cd > 0) continue;
     u.lock = true;
     if (u.burstN > 1) { u.burst = u.burstN - 1; u.bt = T.gap; u.barrel = 0; attack(b, u, t); continue; }
     if (T.atk === 'cannon') u.barrel = (u.barrel + 1) % 2;   // одиночные выстрелы — по очереди из пушек
-    u.cd = T.cd * u.cdMul;
+    u.cd = Math.max(0.1, T.cd - u.cdB) * u.cdMul;
     attack(b, u, t);
   }
   // 5. снаряды гаубиц
@@ -750,7 +818,7 @@ const DIFF = { easy: 0.8, normal: 1, hard: 1.25 };
 function newGame(seed, diff) {
   const k = DIFF[diff] || 1;
   return {
-    v: 25, seed: seed >>> 0, diff: diff in DIFF ? diff : 'normal', round: 1, hp: [START_HP, START_HP],
+    v: 35, seed: seed >>> 0, diff: diff in DIFF ? diff : 'normal', round: 1, hp: [START_HP, START_HP],
     credits: [START_CREDITS, Math.round(START_CREDITS * k)], techs: [{}, {}], squads: [], nextId: 1, botRound: 0, over: null, history: [],
   };
 }
@@ -788,17 +856,21 @@ function applyResult(state, res) {
 }
 
 /* ---------- бот ---------- */
-const BOT_ROWS = { swarm: [0, 1, 2], hound: [0, 1, 2], rail: [4, 5, 3], tesla: [1, 0, 2], goliath: [0, 1], arty: [5, 4, 3], wasp: [3, 2, 4], flak: [3, 4, 2] };
+const BOT_ROWS = { swarm: [0, 1, 2], hound: [0, 1, 2], rail: [4, 5, 3], tesla: [1, 0, 2], goliath: [0, 1], arty: [5, 4, 3], wasp: [3, 2, 4], flak: [3, 4, 2], mustang: [0, 1, 2] };
 
-function botSlot(state, side, t, foeSquads, rng) {
+function botSlot(state, side, t, foeSquads, rng, drop) {
   const pref = BOT_ROWS[UT[t].k], f = UT[t].fp || [1, 1], rots = f[0] === f[1] ? [0] : [0, 1];
   let tx = (COLS - 1) / 2;
   if (foeSquads.length) tx = foeSquads.reduce((a, s) => a + s.col, 0) / foeSquads.length;
+  // для высадки — фланг, где у врага меньше войск
+  const leftFoe = foeSquads.filter((s) => s.col < COLS / 2).length, weakLeft = leftFoe <= foeSquads.length - leftFoe;
   let best = null, bs = -Infinity;
   for (const rot of rots) for (let row = 0; row < ROWS; row++) for (let col = 0; col < COLS; col++) {
-    if (isDrop(col) || !canPlace(state, side, t, col, row, rot)) continue;
+    if (isDrop(col) !== !!drop || !canPlace(state, side, t, col, row, rot)) continue;
     const rank = pref.indexOf(row);
-    const s = (rank < 0 ? -6 : -rank * 2) - Math.abs(col - tx) * 0.35 - rot * 0.6 + rng() * 1.8;
+    const s = drop
+      ? -Math.abs(row - 2) * 0.5 + ((col < COLS / 2) === weakLeft ? 2 : 0) - rot * 0.3 + rng() * 1.5
+      : (rank < 0 ? -6 : -rank * 2) - Math.abs(col - tx) * 0.35 - rot * 0.6 + rng() * 1.8;
     if (s > bs) { bs = s; best = { col, row, rot }; }
   }
   return best;
@@ -850,13 +922,25 @@ function botDeploy(state, side, rng) {
       const s = typeScore(sq.t) + 0.12 + (UT[sq.t].cost >= 100 ? 0.08 : 0) - 0.15 * (sq.lvl - 1) + (rng() - 0.5) * 0.5;
       if (s > bs) { bs = s; best = { up: sq }; }
     }
+    // прокачки: любая из списка TECHS, если в этот тип юнитов уже вложено достаточно
+    state.techs = state.techs || [{}, {}];
+    for (const id of Object.keys(TECHS)) {
+      const X = TECHS[id], ti = KI[X.unit];
+      if (state.techs[side][id] || X.cost > credits || ti === undefined || myVal[ti] < UT[ti].cost) continue;   // хватает одного отряда этого типа
+      const s = typeScore(ti) + 0.45 + (rng() - 0.5) * 0.4;
+      if (s > bs) { bs = s; best = { tech: id }; }
+    }
     if (!best) break;
-    if (best.up) {
+    if (best.tech) {
+      credits -= TECHS[best.tech].cost;
+      state.techs[side][best.tech] = true;
+    } else if (best.up) {
       credits -= upgradeCost(best.up);
       myVal[best.up.t] += UT[best.up.t].cost * (LVL_MUL[best.up.lvl] - LVL_MUL[best.up.lvl - 1]);
       botUp(state, best.up);
     } else {
-      const slot = botSlot(state, side, best.buy, vis, rng);
+      const T = UT[best.buy];
+      const slot = (state.diff === 'hard' && state.round >= DROP_ROUND && T.atk === 'melee' && rng() < 0.35 && botSlot(state, side, best.buy, vis, rng, true)) || botSlot(state, side, best.buy, vis, rng);
       if (!slot) break;
       state.squads.push({ id: state.nextId++, side, t: best.buy, col: slot.col, row: slot.row, rot: slot.rot, lvl: 1, rp: state.round, paid: UT[best.buy].cost });
       credits -= UT[best.buy].cost;
@@ -910,22 +994,33 @@ function* botThink(state, side, rng, depth = 4) {
       if (UT[t].cost > credits) continue;
       const slot = botSlot(state, side, t, vis, rng);
       if (slot) cands.push({ t, slot, cost: UT[t].cost, h: heur[t] });
+      const ds = state.diff === 'hard' && state.round >= DROP_ROUND && botSlot(state, side, t, vis, rng, true);   // фланговая высадка — только сложный бот
+      if (ds) cands.push({ t, slot: ds, cost: UT[t].cost, h: heur[t] - 0.05 });
+    }
+    state.techs = state.techs || [{}, {}];
+    for (const id of Object.keys(TECHS)) {   // прокачки: только для типов, которые у бота уже есть
+      const X = TECHS[id], ti = KI[X.unit];
+      if (state.techs[side][id] || X.cost > credits || ti === undefined || !mine().some((q) => q.t === ti)) continue;
+      cands.push({ tech: id, t: ti, cost: X.cost, h: heur[ti] });
     }
     const ups = mine().filter((q) => q.lvl < 3 && upgradeCost(q) <= credits).sort((x, y) => unitValue(y) - unitValue(x)).slice(0, 2);
     for (const q of ups) cands.push({ up: q, t: q.t, cost: upgradeCost(q), h: heur[q.t] });
     if (!cands.length) break;
     let best = null, bs = -Infinity;
     for (const c of cands) {
-      const army = c.up
+      let techs = state.techs;
+      if (c.tech) { techs = [Object.assign({}, state.techs[0]), Object.assign({}, state.techs[1])]; techs[side][c.tech] = true; }
+      const army = c.tech ? vis.concat(mine()) : c.up
         ? vis.concat(mine().map((q) => (q === c.up ? Object.assign({}, q, { lvl: q.lvl + 1 }) : q)))
         : vis.concat(mine(), [{ id: 1e6, side, t: c.t, col: c.slot.col, row: c.slot.row, rot: c.slot.rot, lvl: 1, rp: state.round }]);
-      c.sc = battleScore(army, side, seed, state.round, state.techs);
+      c.sc = battleScore(army, side, seed, state.round, techs);
       // прирост на кредит + немного подсказки по контрам + щепотка случайности
       const v = (c.sc - base) / c.cost + 0.15 * c.h + (rng() - 0.5) * 0.08;
       if (v > bs) { bs = v; best = c; }
       yield;
     }
-    if (best.up) botUp(state, best.up);
+    if (best.tech) state.techs[side][best.tech] = true;
+    else if (best.up) botUp(state, best.up);
     else state.squads.push({ id: state.nextId++, side, t: best.t, col: best.slot.col, row: best.slot.row, rot: best.slot.rot, lvl: 1, rp: state.round, paid: best.cost });
     state.credits[side] -= best.cost;     // списываю сразу: перезагрузка посреди раздумий не даст потратить дважды
     base = best.sc;
@@ -1013,7 +1108,7 @@ const reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: red
 // моя сторона; в онлайне гость играет за сторону 1 и смотрит на поле развёрнутым, своей армией вниз
 let MY = 0, FOE = 1, FLIP = false, mode = 'bot';
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const GENDER = { swarm: 2, hound: 2, rail: 0, tesla: 1, goliath: 0, arty: 1, wasp: 2, flak: 1 };
+const GENDER = { mustang: 2, swarm: 2, hound: 2, rail: 0, tesla: 1, goliath: 0, arty: 1, wasp: 2, flak: 1 };
 const STRONG = ['Силён', 'Сильна', 'Сильны'], WEAK = ['Слаб', 'Слаба', 'Слабы'];
 
 // палитра в духе Mindustry: тёмный контур и ступени металла; командные цвета — как в Mechabellum
@@ -1188,6 +1283,7 @@ function genTerrain(seed) {
   for (const sx of [TMX, TMX + FW - DROP * SLOT]) for (const y0 of [TMY + D0, TMY + D1 - ZONE]) {
     for (let py = y0; py < y0 + ZONE; py += SLOT) for (let px = sx; px < sx + DROP * SLOT; px += SLOT) castPlate(px, py, 70 + (rng() < 0.2 ? -6 : 0));
     for (let py = y0; py < y0 + ZONE; py += 8) for (const ex of [sx, sx + DROP * SLOT - 3]) { g.fillStyle = ((py - y0) / 8) % 2 ? '#1c1d22' : '#c9a23a'; g.fillRect(ex, py, 3, 8); }
+    for (let px = sx; px < sx + DROP * SLOT; px += 8) for (const ey of [y0, y0 + ZONE - 3]) { g.fillStyle = ((px - sx) / 8) % 2 ? '#1c1d22' : '#c9a23a'; g.fillRect(px, ey, 8, 3); }   // лента сверху и снизу
   }
   // камни и воронки: на ничьей земле и за краями поля
   for (let k = 0; k < 190; k++) {
@@ -1354,6 +1450,33 @@ const ART = {
       Ef(g, -0.5, -2.3, 1.2, 0.85, '#e6e3e8'); Lf(g, -1.2, -2.3, 0.2, -2.3, 0.14, '#a9a6ad');
       Ef(g, -0.5, -2.3, 1.2, 0.85, '#e6e3e8'); Lf(g, -1.2, -2.3, 0.2, -2.3, 0.14, '#a9a6ad');   // левый наплечник
     } },
+  // Мустанг по референсу Mechabellum (вчетверо плотнее пиксели): белый корпус-ховер с голубым фонарём,
+  // красные боковые плавники с решётками, подъёмные вентиляторы, кормовые гондолы; турель — спаренный пулемёт на крыше
+  mustang: { sz: 20, res: 4, frames: 2, step: 1, mount: [-2.6, 0], barrel: 4.5, recoil: 0.5, mzs: [[4.5, -0.85], [4.5, 0.85]],
+    body(g, f, tm) {
+      g.scale(1.18, 1);   // чуть длиннее, как на референсе
+      for (const sy of [-1, 1]) {
+        Ef(g, -1.2, sy * 3, 1.6, 1.6, '#24252b'); Ef(g, -1.2, sy * 3, f ? 1.1 : 0.8, f ? 1.1 : 0.8, '#4a4c55');   // вентиляторы
+        Pf(g, [4.8, sy * 2.1, 2.6, sy * 4.7, -0.6, sy * 4.7, 0.2, sy * 2.5], tm.d); Pf(g, [4.4, sy * 2.2, 2.4, sy * 4.4, -0.2, sy * 4.4, 0.5, sy * 2.6], tm.m);   // плавник
+        for (let k = 0; k < 3; k++) Rf(g, -0.4 + k * 0.6, sy > 0 ? 3.6 : -4.2, 0.3, 0.6, '#24252b');   // решётка
+        Rf(g, -4.8, sy > 0 ? 2.1 : -3.6, 2.4, 1.5, '#e2dfe4'); Rf(g, -4.8, sy > 0 ? 2.1 : -3.6, 2.4, 0.4, '#f4f2f5');   // кормовая гондола
+      }
+      Pf(g, [5.8, 0, 4.3, -1.7, -3.6, -2, -4.9, -1.4, -4.9, 1.4, -3.6, 2, 4.3, 1.7], '#bdb8bb');
+      Pf(g, [5.4, 0, 4.1, -1.4, -3.4, -1.7, -4.5, -1.2, -4.5, 1.2, -3.4, 1.7, 4.1, 1.4], '#e2dfe4');   // корпус
+      Pf(g, [3.8, 0, 3, -0.8, -0.4, -0.8, -0.4, 0.8, 3, 0.8], '#2f6fa8'); Pf(g, [3.4, -0.2, 2.8, -0.55, 0.2, -0.55, 0.2, -0.2], '#8fd0ff');   // фонарь
+      Rf(g, 4.4, -0.3, 0.6, 0.6, tm.m);
+    },
+    tur(g, tm) {   // спаренный пулемёт на крыше
+      g.scale(1.18, 1);   // чуть длиннее, как на референсе
+      Ef(g, -0.7, 0, 1.15, 1.15, '#24252b'); Ef(g, -0.7, 0, 0.55, 0.55, '#5fe8ff');   // поворотный узел с голубым ядром
+      for (const sy of [-1, 1]) {   // две длинные белые гондолы с красной полосой, решёткой и тёмным дулом
+        const y = sy * 0.85;
+        Rf(g, -2.4, y - 0.65, 5.6, 1.3, '#a9a4a8'); Rf(g, -2.2, y - 0.55, 5.2, 1, '#eceaee'); Rf(g, -2.2, y - 0.55, 5.2, 0.25, '#f8f6f9');
+        Rf(g, -1.3, y - 0.12, 3.1, 0.3, tm.m);
+        for (let k = 0; k < 3; k++) Rf(g, 1.9 + k * 0.4, y - 0.45, 0.18, 0.3, '#24252b');
+        Rf(g, 3.1, y - 0.38, 0.7, 0.76, '#24252b');
+      }
+    } },
   rail: { gunLayer: 2, sz: 104, res: 2, frames: 4, step: 3.6, mount: [-2, 0], barrel: 38, recoil: 4.5, guns: [8.8],
     body(g, f, tm) {
       g.scale(2, 2);
@@ -1409,14 +1532,14 @@ const ART = {
     } },
   // Саблезуб по референсу Mechabellum (вчетверо плотнее пиксели): широкие гусеницы под бронированными бортовыми
   // блоками, светлый корпус с кормовой решёткой и фарами; башня — массивный блок, две пушки с дульными тормозами
-  goliath: { gunLayer: 1, sz: 80, res: 2, frames: 3, step: 2.3, mount: [-4.2, 0], barrel: 36.4, recoil: 4.5, guns: [-7.3, 7.3],
+  goliath: { gunLayer: 1, sz: 80, res: 2, frames: 3, step: 2.3, mount: [-4.2, 0], barrel: 38.9, recoil: 4.5, guns: [-7.3, 7.3],
     gun(g, tm) {   // одна пушка: кожух цвета уровня, ствол, дульный тормоз
       g.scale(1.4, 1.4);   // крупный танк: рисунок увеличен под площадь 2×2
       Rf(g, -7, -2.4, 19.5, 4.8, tm.d); Rf(g, -6.6, -2, 18.7, 4, tm.m); Rf(g, -5, -1.7, 14, 1, tm.l);
       Rf(g, 3.5, -0.4, 1.2, 0.8, '#ffe07a');
       Rf(g, 12.5, -1.2, 9, 2.4, '#24252b'); Rf(g, 12.5, -1, 9, 0.7, '#5a5c66');
-      Pf(g, [21, -2.4, 25.5, -2.4, 26.6, -1.3, 26.6, 1.3, 25.5, 2.4, 21, 2.4], tm.m);
-      Rf(g, 22, -2.3, 0.6, 4.6, '#2c2d33'); Rf(g, 23.4, -2.3, 0.6, 4.6, '#2c2d33'); Rf(g, 25.6, -0.9, 1.1, 1.8, '#111216');
+      Pf(g, [21, -1.9, 26.6, -1.9, 27.8, -1, 27.8, 1, 26.6, 1.9, 21, 1.9], tm.m);   // дульный тормоз: уже и длиннее
+      Rf(g, 22.2, -1.8, 0.55, 3.6, '#2c2d33'); Rf(g, 23.8, -1.8, 0.55, 3.6, '#2c2d33'); Rf(g, 25.4, -1.8, 0.55, 3.6, '#2c2d33'); Rf(g, 26.9, -0.75, 1, 1.5, '#111216');
     },
     body(g, f, tm) {
       g.scale(1.4, 1.4);   // крупный танк: рисунок увеличен под площадь 2×2
@@ -1437,6 +1560,11 @@ const ART = {
     },
     tur(g, tm) {
       g.scale(1.4, 1.4);   // крупный танк: рисунок увеличен под площадь 2×2
+      for (const sy of [-1, 1]) { Pf(g, [-6.2, sy * 7.5, 0.2, sy * 7.5, -0.8, sy * 9.3, -5.2, sy * 9.3], tm.d); Pf(g, [-5.8, sy * 7.7, -0.2, sy * 7.7, -1, sy * 8.9, -5, sy * 8.9], tm.m); }   // трапеции у казёнников
+      // юбка: изогнутая бронепластина перед основанием башни
+      Pf(g, [8.8, 0, 8.4, -5, 7.2, -8.6, 5.4, -8, 6.6, -4.6, 6.9, 0, 6.6, 4.6, 5.4, 8, 7.2, 8.6, 8.4, 5], '#d6d1d4');
+      Pf(g, [7.4, 0, 7.1, -4.4, 6.1, -7.5, 5.6, -7.2, 6.5, -4.3, 6.8, 0, 6.5, 4.3, 5.6, 7.2, 6.1, 7.5, 7.1, 4.4], '#a29da1');
+      Rf(g, 8.1, -2.2, 0.5, 4.4, tm.d); Rf(g, 7.6, -3.6, 0.6, 0.6, '#ffe07a'); Rf(g, 7.6, 3, 0.6, 0.6, '#ffe07a');
       Pf(g, [6.5, -9, 4, -11, -8, -11, -11, -8, -11, 8, -8, 11, 4, 11, 6.5, 9], '#8f8a8e');   // основание башни
       Pf(g, [5.8, -8.4, 3.6, -10.2, -7.6, -10.2, -10.2, -7.6, -10.2, 7.6, -7.6, 10.2, 3.6, 10.2, 5.8, 8.4], '#dcd7da');
       Rf(g, -4.5, -2.4, 7.5, 4.8, '#2c2d33');
@@ -1632,7 +1760,8 @@ function muzzle(u, fx, fy, k) {
   const A = ART[u.T.k], ba = u._ba ?? Math.atan2(u.fy, u.fx), ta = u._ta ?? Math.atan2(u.fy, u.fx);
   const m = A.mount || [0, 0], c = Math.cos(ba), s = Math.sin(ba), off = A.guns ? A.guns[k || 0] || 0 : 0;
   const cx = u.x + m[0] * c - m[1] * s - Math.sin(ta) * off, cy = u.y + m[0] * s + m[1] * c + Math.cos(ta) * off;
-  if (A.mz) return [cx + Math.cos(ta) * A.mz[0] - Math.sin(ta) * A.mz[1], cy + Math.sin(ta) * A.mz[0] + Math.cos(ta) * A.mz[1]];   // дуло сбоку от оси
+  const mzv = A.mzs ? A.mzs[(k || 0) % A.mzs.length] : A.mz;   // несколько стволов — дула по очереди
+  if (mzv) return [cx + Math.cos(ta) * mzv[0] - Math.sin(ta) * mzv[1], cy + Math.sin(ta) * mzv[0] + Math.cos(ta) * mzv[1]];
   return [cx + Math.cos(ta) * A.barrel, cy + Math.sin(ta) * A.barrel];
 }
 // состояние анимации живёт прямо на объекте юнита и в расчёте боя не участвует
@@ -1775,7 +1904,8 @@ function onEvent(e) {
   const tm = TEAM[tmOf(e.side)];
   switch (e.k) {
     case 'gun': {
-      const m = muzzle(src, e.x0, e.y0);
+      const kk = src && ART[src.T.k].mzs ? (src._alt = ((src._alt || 0) + 1) % ART[src.T.k].mzs.length) : 0;
+      const m = muzzle(src, e.x0, e.y0, kk);
       muzzleFx(src, m, 4, '#ffe6a0'); casing(src, m);
       bullet(m[0], m[1], e.x1 + (Math.random() - 0.5) * 3, e.y1 + (Math.random() - 0.5) * 3, 560, '#ffeab8', 5, 1.1, 'gun');
       break;
@@ -1984,8 +2114,8 @@ function drawRange(t, side, col, row, rot) {
   if (T.rng < 10) return;
   const c = squadCenter({ t, side, col, row, rot });
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.setLineDash([5, 5]); ctx.lineWidth = 1; ctx.strokeStyle = sideRgba(side, 0.55);
-  ctx.beginPath(); ctx.arc(SX(c.x), SY(c.y), (T.rng + T.r) * FS, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([6, 6]); ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(255,255,255,0.85)';   // радиус — белый, как пунктир атаки
+  ctx.beginPath(); ctx.arc(SX(c.x), SY(c.y), (T.rng + rangeBonus(state && state.techs, side, T.k) + T.r) * FS, 0, Math.PI * 2); ctx.stroke();
   ctx.setLineDash([]);
 }
 // куда отряд пойдёт в бою: та же логика, что в ядре — разворот к ближайшему видимому врагу,
@@ -2011,7 +2141,7 @@ function attackLine(sq, alpha, bold) {
   if (d < SLOT * FS) return;
   const ux = dx / d, uy = dy / d, a = SLOT * FS * 0.42, b = p.hit ? SLOT * FS * 0.45 : 0;
   const sx = x0 + ux * a, sy = y0 + uy * a, ex = x1 - ux * b, ey = y1 - uy * b;
-  const rgb = TEAM[tmOf(sq.side)].rgb, w = bold ? 2.2 : 1.6;
+  const rgb = '255,255,255', w = bold ? 2.2 : 1.6;   // пунктир атаки — белый
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.lineCap = 'butt';
   ctx.setLineDash([6, 6]); ctx.lineDashOffset = -clock * 28;
@@ -2032,7 +2162,8 @@ const shownLvl = (sq) => (sq.side === FOE && state && sq.upR === state.round && 
 function drawSquadDeploy(sq, alpha, col, row) {
   const at = col === undefined ? sq : { side: sq.side, t: sq.t, col, row, rp: sq.rp, rot: sq.rot };
   const f = state ? squadFacing(at, state.squads, state.round) : { x: 0, y: sq.side === 0 ? -1 : 1 };
-  const AA = ART[UT[sq.t].k], ang = Math.atan2(f.y, f.x), fr = AA.air ? Math.floor(clock * 18) % 2 : 0;   // на расстановке наземные стоят неподвижно
+  const AA = ART[UT[sq.t].k], off0 = AA.guns && AA.guns.length === 1 ? AA.guns[0] : AA.mz ? AA.mz[1] : 0, pl0 = off0 && state ? attackPlan(sq) : null;
+  const ang = Math.atan2(f.y, f.x) - (pl0 && pl0.hit ? Math.asin(Math.max(-1, Math.min(1, off0 / (Math.hypot(pl0.to.x - pl0.c.x, pl0.to.y - pl0.c.y) || 1)))) : 0), fr = AA.air ? Math.floor(clock * 18) % 2 : 0;   // на расстановке наземные стоят неподвижно
   const lv = shownLvl(sq);
   for (const [x, y] of squadPositions(at)) drawUnitRaw(sq.t, sq.side, lv, x, y, ang, ang, fr, 0, 0, alpha);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2237,15 +2368,16 @@ function render(a, dt) {
   else if (state) { drawDeploy(); drawFx(); }
 }
 
-let last = performance.now();
+let last = performance.now(), paused = false, hiddenAt = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   const rdt = Math.min(0.05, Math.max(0, (now - last) / 1000));
   last = now;
   clock += rdt;
   let a = 1, sdt = rdt;
+  if (mode === 'online') speed = on && on.fast ? 2 : 1;   // в онлайне скорость только по общему голосованию
   if (battle && phase === 'battle') {
-    if (overlay.hidden) {
+    if (overlay.hidden && !(paused && mode !== 'online')) {
       if (!battle.over) {
         acc += rdt * speed;
         let n = 0;
@@ -2270,6 +2402,7 @@ function frame(now) {
 const ICON_AT = {
   swarm: { at: [[-0.24, 0.2], [0.24, 0.2], [0, -0.22]], k: 0.5 },
   hound: { at: [[-0.24, 0.2], [0.24, 0.2], [0, -0.22]], k: 0.5 },
+  mustang: { at: [[-0.24, 0.2], [0.24, 0.2], [0, -0.22]], k: 0.5 },
   wasp: { at: [[-0.24, 0.2], [0.24, 0.2], [0, -0.22]], k: 0.5 },
 };
 // юнит в сборе (корпус и башня), обрезанный по фактическим границам рисунка
@@ -2381,8 +2514,10 @@ function endBattle() {
   if (state.over) { phase = 'over'; clearSave(); showPanel(); showOver(); }
   else { phase = 'result'; save(); showPanel(); showResult(res, round); }
 }
-function skipBattle() {
+function resetPause() { paused = false; }
+function skipBattle(byVote) {
   if (!battle || battle.over || phase !== 'battle') return;
+  if (mode === 'online' && !byVote) return;
   battle.quiet = true;
   let guard = 0;
   while (!battle.over && guard++ < 6000) step(battle);
@@ -2651,7 +2786,7 @@ function chips(t, lvl) {
     // выстрел — каждый снаряд (у Гаубицы каждая ракета залпа); удар — урон одного выстрела,
     // в строке отряда — урон общего залпа всех юнитов
     const d = T.dmg * m;
-    const dbl = T.k === 'goliath' && state && state.techs && state.techs[MY] && state.techs[MY].dbl, bn = dbl ? 2 : 1, cdv = T.cd * (dbl ? 1.12 : 1), cyc = cdv + (T.gap || 0) * (bn - 1);
+    const dbl = T.k === 'goliath' && state && state.techs && state.techs[MY] && state.techs[MY].dbl, bn = dbl ? 2 : 1, cdv = Math.max(0.1, T.cd - (state ? techBonus(state.techs, MY, T.k, 'cdD') : 0)) * (dbl ? 1.12 : 1), cyc = cdv + (T.gap || 0) * (bn - 1);
     if (bn > 1) burstNote = ` <i>залп ${bn} выстр. через ${fmtN(T.gap)} с</i>`;
     hit = [fmtN(d), fmtN(d * salvo * bn * n)];
     rate = fmtN(cdv);   // интервал атаки — свойство юнита, от размера отряда не зависит
@@ -2661,20 +2796,22 @@ function chips(t, lvl) {
   const row = (lbl, i, hpv) => `<tr><td>${lbl}</td><td>${fmtN(hpv)}</td><td>${cell(hit, i)}</td><td>${cell(dps, i)}</td></tr>`;
   const tg = T.aa && T.gnd ? 'земля и воздух' : T.aa ? 'только воздух' : 'только земля';
   const tags = [`цели: ${tg}`].concat(T.air ? ['авиация'] : [], T.tags || []);
-  return `<div class="stats"><span title="Дальность">${IC.rng}${T.rng < 10 ? 'вплотную' : T.rng}</span><span title="Скорость">${IC.spd}${T.spd}</span>${T.splash ? `<span title="Радиус сплэша">${IC.spl}${T.splash}</span>` : ''}<span title="Интервал между атаками">${IC.rate}${rate === 'непрерывно' ? 'луч непрерывно' : rate + ' с'}${burstNote}${T.setup ? ` <i>подготовка ${fmtN(T.setup)} с</i>` : ''}</span></div>`
+  return `<div class="stats"><span title="Дальность">${IC.rng}${T.rng < 10 ? 'вплотную' : T.rng + (state ? rangeBonus(state.techs, MY, T.k) : 0)}</span><span title="Скорость">${IC.spd}${T.spd + (state ? techBonus(state.techs, MY, T.k, 'spd') : 0)}</span>${T.splash ? `<span title="Радиус сплэша">${IC.spl}${T.splash}</span>` : ''}<span title="Интервал между атаками">${IC.rate}${rate === 'непрерывно' ? 'луч непрерывно' : rate + ' с'}${burstNote}${T.setup ? ` <i>подготовка ${fmtN(T.setup)} с</i>` : ''}</span></div>`
     + `<table class="st2"><tr><th></th><th title="Здоровье">${IC.hp}</th><th title="Урон одного выстрела; у отряда — общего залпа">${IC.dmg}урон</th><th title="Урон в секунду">${IC.dps}урон/с</th></tr>`
     + row('юнит', 0, T.hp * m) + (n > 1 ? row(`отряд ×${n}`, 1, T.hp * m * n) : '') + '</table>'
     + `<div class="tags">${tags.map((x) => `<span>${x}</span>`).join('')}</div>` + techRow(t);
 }
 // прокачки способностей: иконка с ценой под характеристиками, подсказка при наведении через 0,2 с
 const TECH_IC = {
+  rage: '<svg viewBox="0 0 24 16" aria-hidden="true"><g fill="currentColor"><path d="M12 1.5l1.4 2.6 2.9-.6-.6 2.9L18.3 8l-2.6 1.4.6 2.9-2.9-.6L12 14.5l-1.4-2.8-2.9.6.6-2.9L5.7 8l2.6-1.6-.6-2.9 2.9.6z"/></g><circle cx="12" cy="8" r="2.2" fill="#1b1f27"/></svg>',
+  rng: '<svg viewBox="0 0 24 16" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><path d="M14 8h8M19 5l3 3-3 3"/></g></svg>',
   dbl: '<svg viewBox="0 0 24 16" aria-hidden="true"><g fill="currentColor"><path d="M2 2.2h9.5l3.6 2.9-3.6 2.9H2l2.6-2.9z"/><path d="M7 8h9.5l3.6 2.9-3.6 2.9H7l2.6-2.9z"/></g></svg>',
 };
 function techRow(t) {
   const list = Object.keys(TECHS).filter((id) => TECHS[id].unit === UT[t].k);
   if (!list.length || !state) return '';
   const mine = (state.techs || [{}, {}])[MY];
-  return '<div class="techs">' + list.map((id) => `<button class="tech${mine[id] ? ' own' : ''}" type="button" data-tech="${id}" aria-label="${TECHS[id].name}">${TECH_IC[id] || ''}<span>${mine[id] ? 'изучено' : HEX + TECHS[id].cost}</span></button>`).join('') + '</div>';
+  return '<div class="techs">' + list.map((id) => `<button class="tech${mine[id] ? ' own' : ''}" type="button" data-tech="${id}" aria-label="${TECHS[id].name}">${TECH_IC[id] || TECH_IC[id.split('_')[0]] || ''}<span>${mine[id] ? 'изучено' : HEX + TECHS[id].cost}</span></button>`).join('') + '</div>';
 }
 function buyTech(id) {
   const X = TECHS[id];
@@ -2760,6 +2897,7 @@ function updateHud(o) {
 let tallyCache = '';
 function updateTally(force) {
   if (!battle) return;
+  battleControls();
   const s = battle.alive[0] + ':' + battle.alive[1];
   if (!force && s === tallyCache) return;
   tallyCache = s;
@@ -2901,7 +3039,7 @@ function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /*
 function loadSave() {
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
-    if (!s || s.v !== 25 || s.over || !Array.isArray(s.squads) || !Array.isArray(s.hp) || !Array.isArray(s.credits)) return null;
+    if (!s || s.v !== 35 || s.over || !Array.isArray(s.squads) || !Array.isArray(s.hp) || !Array.isArray(s.credits)) return null;
     s.squads = s.squads.filter((q) => q && UT[q.t] && (q.side === 0 || q.side === 1) && q.col >= 0 && q.col < COLS && q.row >= 0 && q.row < ROWS && q.lvl >= 1 && q.lvl <= 3);
     for (const q of s.squads) if (typeof q.paid !== 'number') q.paid = UT[q.t].cost;
     return s;
@@ -3138,6 +3276,7 @@ function syncOnline() {
   if (on.room.v !== GAME_VER) { showError('Комната создана в другой версии игры. Обновите страницу и создайте новую комнату.'); return; }
   const room = on.room, p = room.p || {}, d = derive();
   if (!d) return;
+  checkVotes(room);
   const opp = p['s' + FOE];
   on.oppName = opp ? String(opp.nm || 'Соперник').slice(0, 16) : '';
   if (d.bad >= 0) {
@@ -3227,7 +3366,7 @@ function restoreDraft(n, R) { const o = getStore(skey('d', n, R)); if (o) applyO
 function playOnlineRound(r) {
   const res = on.cache.get(r);
   if (!res) return;
-  on.shown = r; on.pending = res;
+  on.shown = r; on.pending = res; on.bkey = `g${on.game}/r${r}`; on.fast = false; on.voted = {};
   state = clone(res.pre);
   if (ocard.dataset.kind === 'lobby') closeCard();
   launchBattle(state);
@@ -3343,6 +3482,62 @@ window.addEventListener('keydown', (e) => {
     else if (e.key === '1' || e.key === '2' || e.key === '4') { speed = +e.key; prefs.speed = speed; savePrefs(); showPanel(); }
   }
 });
+
+/* ---------- голосование в онлайне, пауза, фон ---------- */
+// голоса за ускорение ×2 (с 10-й секунды боя) и пропуск (с 20-й): срабатывают, когда проголосовали оба
+function vote(kind) {
+  if (mode !== 'online' || !on || !on.bkey || phase !== 'battle' || on.voted[kind]) return;
+  on.voted[kind] = true;
+  net.update(on.code, { [`${on.bkey}/${kind}/s${MY}`]: true }).catch((e) => { on.voted[kind] = false; onlineError(e); });
+  battleControls(true);
+}
+function checkVotes(room) {
+  if (mode !== 'online' || !on || !on.bkey || phase !== 'battle') return;
+  const [g, r] = on.bkey.split('/'), rd = room[g] && room[g][r];
+  if (!rd) return;
+  const sp = rd.sp || {}, sk = rd.sk || {};
+  if (sp.s0 && sp.s1 && !on.fast) { on.fast = true; toast('Оба за ускорение: ×2'); }
+  if (sk.s0 && sk.s1 && battle && !battle.over) { toast('Оба за пропуск'); skipBattle(true); }
+  on.oppVote = { sp: !!sp['s' + FOE], sk: !!sk['s' + FOE] };
+  battleControls(true);
+}
+let ctlCache = '';
+function battleControls(force) {
+  if (phase !== 'battle' && paused) paused = false;   // пауза живёт только в пределах боя
+  const online = mode === 'online', t = battle ? battle.t : 0;
+  const showSp = online && phase === 'battle' && t >= 10 && !(on && on.fast), showSk = online && phase === 'battle' && t >= 20;
+  const key = [online, showSp, showSk, on && on.voted && on.voted.sp, on && on.voted && on.voted.sk, on && on.oppVote && on.oppVote.sp, on && on.oppVote && on.oppVote.sk, paused, phase].join('|');
+  if (!force && key === ctlCache) return;
+  ctlCache = key;
+  const row = document.querySelector('#battleUI .battle-row');
+  if (row) row.hidden = online;
+  $('votes').hidden = !(showSp || showSk);
+  const vs = $('voteSpeed'), vk = $('voteSkip'), mine = (on && on.voted) || {}, opp = (on && on.oppVote) || {};
+  vs.hidden = !showSp; vk.hidden = !showSk;
+  vs.classList.toggle('voted', !!mine.sp); vk.classList.toggle('voted', !!mine.sk);
+  vs.textContent = mine.sp ? 'Ждём соперника… ×2' : opp.sp ? 'Соперник за ×2 — ускорить' : 'Ускорить ×2';
+  vk.textContent = mine.sk ? 'Ждём соперника… пропуск' : opp.sk ? 'Соперник за пропуск — пропустить' : 'Пропустить';
+  $('pauseBtn').hidden = !(mode !== 'online' && phase === 'battle');
+  $('pauseTag').hidden = !(paused && mode !== 'online' && phase === 'battle');
+}
+function togglePause() { if (mode === 'online' || phase !== 'battle') return; paused = !paused; battleControls(true); }
+$('voteSpeed').addEventListener('click', () => vote('sp'));
+$('voteSkip').addEventListener('click', () => vote('sk'));
+$('pauseBtn').addEventListener('click', togglePause);
+window.addEventListener('keydown', (e) => { if ((e.key === 'p' || e.key === 'P' || e.key === 'з' || e.key === 'З') && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') togglePause(); });
+// свёрнутая вкладка: онлайн-бой продолжается (по возвращении догоняю время), бой с ботом стоит
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { hiddenAt = performance.now(); return; }
+  if (mode === 'online' && battle && phase === 'battle' && !battle.over && hiddenAt) {
+    const lag = Math.min(120, (performance.now() - hiddenAt) / 1000) * speed;
+    const q = battle.quiet; battle.quiet = true;
+    for (let i = 0, n = Math.floor(lag / DT); i < n && !battle.over; i++) step(battle);
+    battle.quiet = q; battle.ev.length = 0; clearFx(); updateTally(true);
+  }
+  hiddenAt = 0;
+});
+// сторож онлайна: пока ждём соперника, регулярно пересматриваю комнату — повторит раскрытие хода после сбоя связи
+setInterval(() => { if (mode === 'online' && on && on.room && (phase === 'wait' || phase === 'deploy')) { on.revealed = {}; syncOnline(); } }, 2500);
 
 /* ---------- старт ---------- */
 if (window.ResizeObserver) new ResizeObserver(() => layout()).observe(stage);
